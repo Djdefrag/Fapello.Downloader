@@ -26,6 +26,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from win32mica import MICAMODE, ApplyMica
 
 import sv_ttk
@@ -37,7 +38,7 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "v 3.0"
+version  = "v 4.0"
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -47,6 +48,9 @@ text_color            = "#F0F0F0"
 cpu_number            = 4
 windows_subversion    = int(platform.version().split('.')[2])
 
+global browser
+browser               = 'Chrome'
+
 paypalme           = "https://www.paypal.com/paypalme/jjstd/5"
 githubme           = "https://github.com/Djdefrag/Fapello.Downloader"
 itchme             = "https://jangystudio.itch.io/fapellodownloader"
@@ -55,15 +59,14 @@ ctypes.windll.shcore.SetProcessDpiAwareness(True)
 scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 font_scale = round(1/scaleFactor, 1)
 
+
 # ---------------------- Functions ----------------------
 
 # ---------------------- Utils ----------------------
 
+
 def openitch():
     webbrowser.open(itchme, new=1)
-
-def openpaypal():
-    webbrowser.open(paypalme, new=1)
 
 def opengithub():
     webbrowser.open(githubme, new=1)
@@ -124,37 +127,43 @@ def get_file_url(link):
 
     return file_url, file_type
 
-def setup_browser(choosed_browser = "chrome"):
-    if choosed_browser == "edge":
+def setup_browser(browser):
+    if browser == "Edge":
         config = webdriver.EdgeOptions()
         config.add_argument('--headless')
         config.add_argument('--disable-infobars')
         config.add_argument('window-size=1920x1080')        
-        config.add_experimental_option('excludeSwitches',
-                                     ['enable-logging'])
+        config.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-        edge_service = EdgeService(find_by_relative_path("Assets" 
-                                                         + os.sep 
-                                                         + "edgedriver.exe"))
+        edge_service = EdgeService(find_by_relative_path("Assets" + os.sep + "msedgedriver.exe"))
         edge_service.creation_flags = CREATE_NO_WINDOW
 
-        driver = webdriver.Edge(service = edge_service, 
-                                options = config)
-    elif choosed_browser == "chrome":
+        driver = webdriver.Edge(service = edge_service, options = config)
+
+    elif browser == "Chrome":
         config = webdriver.ChromeOptions()
         config.add_argument('--headless')
         config.add_argument('--disable-infobars')
         config.add_argument('window-size=1920x1080')
-        config.add_experimental_option('excludeSwitches', 
-                                        ['enable-logging'])
+        config.add_experimental_option('excludeSwitches', ['enable-logging'])
     
-        chrome_service = ChromeService(find_by_relative_path("Assets" 
-                                                            + os.sep 
-                                                            + "chromedriver.exe"))
+        chrome_service = ChromeService(find_by_relative_path("Assets" + os.sep + "chromedriver.exe"))
         chrome_service.creation_flags = CREATE_NO_WINDOW
 
-        driver = webdriver.Chrome(service = chrome_service, 
-                                  options = config)
+        driver = webdriver.Chrome(service = chrome_service, options = config)
+
+    elif browser == "Firefox":
+        config = webdriver.FirefoxOptions()
+        config.add_argument('--headless')
+        config.add_argument('--disable-infobars')
+        config.add_argument('window-size=1920x1080')
+        #config.add_experimental_option('excludeSwitches', ['enable-logging'])
+    
+        firefox_service = FirefoxService(find_by_relative_path("Assets" + os.sep + "geckodriver.exe"))
+        firefox_service.creation_flags = CREATE_NO_WINDOW
+
+        driver = webdriver.Chrome(service = firefox_service, options = config)
+
     return driver
 
 def get_number_of_images(link):
@@ -165,10 +174,10 @@ def get_number_of_images(link):
     return media_number
 
 
-
 # ---------------------- /Utils ----------------------
 
 # ---------------------- Core ----------------------
+
 
 def crop_border(input_img):
     image = cv2.imread(input_img)
@@ -183,7 +192,7 @@ def crop_border(input_img):
 
     cv2.imwrite(input_img, img = crop)
 
-def process_start_download( link, cpu_number ):
+def process_start_download( link, cpu_number, browser ):
     actual_dir    = get_actual_path()
     dir_name      = link.split("/")[3]
     target_dir    = actual_dir + os.sep + dir_name
@@ -201,22 +210,18 @@ def process_start_download( link, cpu_number ):
 
         write_in_log_file("Downloading...")
 
-        #with multiprocessing.Pool(cpu_number) as pool:
-        #    pool.starmap(process_download_file, zip(itertools.repeat(link), 
-        #                                        list_of_index, 
-        #                                        itertools.repeat(target_dir)))
-
         with ThreadPool(cpu_number) as pool:
             pool.starmap(process_download_file, zip(itertools.repeat(link), 
                                                 list_of_index, 
-                                                itertools.repeat(target_dir)))
+                                                itertools.repeat(target_dir),
+                                                itertools.repeat(browser)))
 
 
         write_in_log_file("Completed | " + target_dir)
     except:
         write_in_log_file("Ops, some error occured while downloading")
 
-def process_download_file(link, index, target_dir):
+def process_download_file(link, index, target_dir, browser):
     link = link + str(index)
        
     try:
@@ -224,7 +229,7 @@ def process_download_file(link, index, target_dir):
         file_name = prepare_filename(file_url, index, file_type)
 
         if file_type == "image":
-            download_image(file_url, file_name, target_dir)
+            download_image(file_url, file_name, target_dir, browser)
             x = 1 + "x"
         elif file_type == "video":
             download_video(file_url, file_name, target_dir)
@@ -234,10 +239,10 @@ def process_download_file(link, index, target_dir):
 
 
 
-def download_image(file_url, file_name, target_dir):
+def download_image(file_url, file_name, target_dir, browser):
     filepath = target_dir + os.sep + file_name
 
-    browser = setup_browser()
+    browser = setup_browser(browser)
     browser.get(file_url)
     browser.execute_script("document.body.style.zoom = '90%'")
     browser.save_screenshot(filepath)
@@ -248,8 +253,8 @@ def download_image(file_url, file_name, target_dir):
 def download_video(file_url, file_name, target_dir):
     urllib.request.urlretrieve(file_url, target_dir + os.sep + file_name) 
 
-def thread_check_steps_download( link, not_used_var2 ):
-    time.sleep(3)
+def thread_check_steps_download( link, how_many_files ):
+    time.sleep(2)
 
     actual_dir    = get_actual_path()
     dir_name      = link.split("/")[3]
@@ -263,7 +268,7 @@ def thread_check_steps_download( link, not_used_var2 ):
                 stop = 1 + "x"
             elif "Downloading" in step:
                 count = len(fnmatch.filter(os.listdir(target_dir), '*.*'))
-                info_string.set("Downloading " + str(count))
+                info_string.set("Downloading " + str(count) + "/" + str(how_many_files))
             else:
                 info_string.set(step)
 
@@ -280,6 +285,9 @@ def thread_check_steps_download( link, not_used_var2 ):
 def download_button_command():
     global process_download
     global cpu_number
+    global browser
+
+    info_string.set("...")
 
     try:
         cpu_number = int(float(str(selected_cpu_number.get())))
@@ -293,14 +301,17 @@ def download_button_command():
     elif selected_link == "":
         info_string.set("Please, insert a valid Fapello link")
     else:
+        how_much_images = int(get_number_of_images(selected_link))  
+        how_much_images = round(how_much_images*1.1)
+
         place_stop_button()
         
         process_download = multiprocessing.Process(target = process_start_download,
-                                                   args   = (selected_link, cpu_number))
+                                                   args   = (selected_link, cpu_number, browser))
         process_download.start()
 
         thread_wait = threading.Thread( target = thread_check_steps_download,
-                                        args   = (selected_link, 1), 
+                                        args   = (selected_link, how_much_images), 
                                         daemon = True)
         thread_wait.start()
 
@@ -308,18 +319,14 @@ def download_button_command():
 
 
 def place_cpu_number_spinbox():
-    ft = tkFont.Font(family = default_font,
-                     size   = round(12 * font_scale),
-                     weight = "bold")
-
-    Left_bar = ttk.Notebook(root)
-    Left_bar.place(x = window_width - 285 - 30, 
+    cpu_number_container = ttk.Notebook(root)
+    cpu_number_container.place(x = window_width - 285 - 30, 
                     y = 220, 
                     width  = 285,
                     height = 65)
 
-    global entry_box_cpu_number
-    entry_box_cpu_number = ttk.Spinbox(root,  
+    global spinbox_cpu_number
+    spinbox_cpu_number = ttk.Spinbox(root,  
                                         from_     = 1, 
                                         to        = 100, 
                                         increment = 1,
@@ -327,51 +334,78 @@ def place_cpu_number_spinbox():
                                         justify      = 'center',
                                         foreground   = text_color,
                                         takefocus    = False,
-                                        font         = ft)
-    entry_box_cpu_number.place( x = window_width - 130 - 43, 
+                                        font         = bold12)
+    spinbox_cpu_number.place( x = window_width - 130 - 43, 
                                 y = 232, 
                                 width  = 130, 
                                 height = 38 )
-    entry_box_cpu_number.insert(0, cpu_number)
+    spinbox_cpu_number.insert(0, cpu_number)
 
     cpu_selection_title = ttk.Label(root, background = "", 
-                                    font = tkFont.Font(family = default_font,
-                                                        size   = round(11 * font_scale),
-                                                        weight = "bold"), 
-                                     foreground = text_color, justify = 'right', 
+                                    font = bold11, 
+                                     foreground = text_color, 
+                                     justify = 'right', 
                                      relief = 'flat', text = " Cpu number ")
     cpu_selection_title.place(x = window_width - 127 - 173,
                                 y = 232,
                                 width  = 127,
                                 height = 40)
 
-def place_paypal_button():
-    global logo_paypal
-    horizontal_center = window_width/2
 
-    logo_paypal = PhotoImage(file=find_by_relative_path("Assets" 
-                                                        + os.sep 
-                                                        + "paypal_logo.png"))
 
-    logo_paypal_label = ttk.Button(root,
-                                   image = logo_paypal,
-                                   padding = '0 0 0 0',
-                                   text = ' Paypal',
-                                   compound = 'left',
-                                   style    = 'Bold.TButton')
-    logo_paypal_label.place(x = horizontal_center + 5,
-                            y = 90,
-                            width  = 125,
-                            height = 35)
-    logo_paypal_label["command"] = lambda: openpaypal()
+def combobox_browser_selection(event):
+    global browser
+
+    selected_option = str(selected_browser.get())
+    browser_combobox.set('')
+    browser_combobox.set(selected_option)
+    browser = selected_option
+
+def place_browser_combobox():
+
+    browser_list = ['Chrome', 'Firefox', 'Edge']
+
+    browser_container = ttk.Notebook(root)
+    browser_container.place(x = window_width - 285 - 30, 
+                            y = 300, 
+                            width  = 285,
+                            height = 65)
+
+    global browser_combobox
+    browser_combobox = ttk.Combobox(root, 
+                            textvariable = selected_browser, 
+                            justify      = 'center',
+                            foreground   = text_color,
+                            values       = browser_list,
+                            state        = 'readonly',
+                            takefocus    = False,
+                            font         = bold12)
+    browser_combobox.place( x = window_width - 130 - 43, 
+                            y = 312, 
+                            width  = 130, 
+                            height = 38 )
+
+    browser_combobox.bind('<<ComboboxSelected>>', combobox_browser_selection)
+    browser_combobox.set(browser_list[0])
+
+    browser_label = ttk.Label(root, 
+                                font       = bold11, 
+                                foreground = text_color, 
+                                justify    = 'left', 
+                                relief     = 'flat', 
+                                text       = " Browser ")
+    browser_label.place(x = window_width - 127 - 173,
+                        y = 312,
+                        width  = 127,
+                        height = 40)
+
+
 
 def place_itch_button():
     global logo_itch
     horizontal_center = window_width/2
 
-    logo_itch = PhotoImage(file = find_by_relative_path( "Assets" 
-                                                        + os.sep 
-                                                        + "itch_logo.png"))
+    logo_itch = PhotoImage(file = find_by_relative_path( "Assets" + os.sep + "itch_logo.png"))
 
     version_button = ttk.Button(root,
                                image = logo_itch,
@@ -379,7 +413,7 @@ def place_itch_button():
                                text    = " " + version,
                                compound = 'left',
                                style    = 'Bold.TButton')
-    version_button.place(x = horizontal_center - 125 - 5,
+    version_button.place(x = horizontal_center - 125/2,
                         y = 90,
                         width  = 125,
                         height = 35)
@@ -434,21 +468,13 @@ def place_background():
                      height = window_height)
 
 def place_entrybox_widget():
-    ft = tkFont.Font(family = default_font,
-                     size   = round(13 * font_scale),
-                     weight = "normal")
-
-    root.option_add("*TCombobox*Listbox*Background", background_color)
-    root.option_add("*TCombobox*Listbox*Font",       ft)
-    root.option_add('*TCombobox*Listbox.Justify',    'center')
-
     global Entry_box_url
     Entry_box_url = ttk.Entry(root, 
                             textvariable = selected_url, 
                             justify      = 'center',
                             foreground   = text_color,
                             takefocus    = False,
-                            font         = ft)
+                            font         = normal13)
     Entry_box_url.place(x = window_width/2 - (window_width * 0.83)/2, 
                         y = 150, 
                         width  = window_width * 0.83, 
@@ -561,9 +587,8 @@ class App:
     def __init__(self, root):
         sv_ttk.use_dark_theme()
 
-        ft = tkFont.Font(family = default_font, size   = round(11 * font_scale), weight = 'bold')
         Upsc_Butt_Style = ttk.Style()
-        Upsc_Butt_Style.configure("Bold.TButton", font = ft)
+        Upsc_Butt_Style.configure("Bold.TButton", font = bold11)
 
         root.title('')
         width        = window_width
@@ -585,10 +610,10 @@ class App:
         place_background()
         place_app_title()
         place_itch_button()
-        place_paypal_button()
 
         place_entrybox_widget()
         place_cpu_number_spinbox()
+        place_browser_combobox()
         place_message_box()             
         place_download_button()
 
@@ -596,9 +621,23 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
     
     root = tkinterDnD.Tk()
-    selected_url = tk.StringVar()
-    info_string = tk.StringVar()
+    selected_url        = tk.StringVar()
+    info_string         = tk.StringVar()
     selected_cpu_number = tk.StringVar()
+    selected_browser    = tk.StringVar()
+
+    normal12 = tkFont.Font(family = default_font, size   = round(12 * font_scale), weight = 'normal')
+    normal13 = tkFont.Font(family = default_font, size   = round(13 * font_scale), weight = 'normal')
+
+
+    bold10 = tkFont.Font(family = default_font, size   = round(10 * font_scale), weight = 'bold')
+    bold11 = tkFont.Font(family = default_font, size   = round(11 * font_scale), weight = 'bold')
+    bold12 = tkFont.Font(family = default_font, size   = round(12 * font_scale), weight = 'bold')
+    bold13 = tkFont.Font(family = default_font, size   = round(13 * font_scale), weight = 'bold')
+    bold14 = tkFont.Font(family = default_font, size   = round(14 * font_scale), weight = 'bold')
+    bold15 = tkFont.Font(family = default_font, size   = round(15 * font_scale), weight = 'bold')
+    bold20 = tkFont.Font(family = default_font, size   = round(20 * font_scale), weight = 'bold')
+    bold21 = tkFont.Font(family = default_font, size   = round(21 * font_scale), weight = 'bold')
 
     app = App(root)
     root.update()
