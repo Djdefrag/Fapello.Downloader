@@ -10,7 +10,7 @@
 <br>
 
 <div align="center">
-    <img src="https://user-images.githubusercontent.com/32263112/205343688-74447412-0f9d-4177-90fe-d0567b03fb80.png"> </a> 
+    <img src="https://user-images.githubusercontent.com/32263112/207787817-7ae3f9fd-82c1-4135-8422-b9f01963f59b.png"> </a> 
 </div>
 
 
@@ -48,8 +48,8 @@ Fapello.Downloader is completely written in Python, from backend to frontend. Ex
 * A folder named with the name associated with the downloaded link will be created in the FapelloDownloader directory (for example FapelloDownloader/mia-kha***/)
 
 ## Next steps. 🤫
-- [ ] Support for other browser instead of Chrome (Brave / Firefox / Edge / Opera)
+- [x] Support for other browser instead of Chrome (Brave / Firefox / Edge / Opera)
 - [ ] Update libraries 
-    - [ ] Python 3.10 (expecting ~10% more performance) 
+    - [x] Python 3.10 (expecting ~10% more performance) 
     - [ ] Python 3.11 (expecting ~30% more performance)
 
