@@ -16,9 +16,9 @@
 
 ## Other projects.🤓
 
-https://github.com/Djdefrag/QualityScaler / QualityScaler - image/video deeplearning upscaler with any GPU (BSRGAN/Pytorch)
+https://github.com/Djdefrag/QualityScaler / QualityScaler - image/video AI upscaler app (BSRGAN)
 
-https://github.com/Djdefrag/ReSR.Scaler / ReSR.Scaler - image/video deeplearning upscaler with any GPU (Real-ESRGAN/Pytorch)
+https://github.com/Djdefrag/RealESRScaler / RealESRScaler - image/video AI upscaler app (Real-ESRGAN)
 
 
 ## How is made. 🛠
