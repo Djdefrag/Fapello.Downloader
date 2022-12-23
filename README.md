@@ -32,8 +32,7 @@ Fapello.Downloader is completely written in Python, from backend to frontend. Ex
 
 ## HOW TO USE. 👨‍💻
 #### Prerequisites: 
-* (Important!) FapelloDownloader will ONLY work with Google Chrome installed.
-* Install Visual-C-Runtimes with the archive in this folder or download from this link https://www.techpowerup.com/download/visual-c-redistributable-runtime-package-al...
+* (Important!) FapelloDownloader will ONLY work with Chrome or Firefox or Edge installed. 
   
 #### Installation:
  * download Fapello.Downloader release .zip
