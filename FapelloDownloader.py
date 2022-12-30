@@ -24,9 +24,11 @@ import tkinterDnD
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.edge.service import Service as EdgeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from win32mica import MICAMODE, ApplyMica
 
 import sv_ttk
@@ -38,7 +40,14 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "v 4.0"
+version  = "v 5.0"
+
+# Download function rewritten to improve speed and resource consumption
+# FapelloDownloder will automatically download needed files for the selected browser
+# Fixed a bug when selecting Edge or Firefox download would not start
+# Updated libraries
+# Better error messages
+# General bugfix and improvements
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -51,7 +60,6 @@ windows_subversion    = int(platform.version().split('.')[2])
 global browser
 browser               = 'Chrome'
 
-paypalme           = "https://www.paypal.com/paypalme/jjstd/5"
 githubme           = "https://github.com/Djdefrag/Fapello.Downloader"
 itchme             = "https://jangystudio.itch.io/fapellodownloader"
 
@@ -135,10 +143,10 @@ def setup_browser(browser):
         config.add_argument('window-size=1920x1080')        
         config.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-        edge_service = EdgeService(find_by_relative_path("Assets" + os.sep + "msedgedriver.exe"))
-        edge_service.creation_flags = CREATE_NO_WINDOW
+        service = EdgeService(EdgeChromiumDriverManager().install())
+        service.creation_flags = CREATE_NO_WINDOW
 
-        driver = webdriver.Edge(service = edge_service, options = config)
+        driver = webdriver.Edge(service = service, options = config)
 
     elif browser == "Chrome":
         config = webdriver.ChromeOptions()
@@ -147,22 +155,20 @@ def setup_browser(browser):
         config.add_argument('window-size=1920x1080')
         config.add_experimental_option('excludeSwitches', ['enable-logging'])
     
-        chrome_service = ChromeService(find_by_relative_path("Assets" + os.sep + "chromedriver.exe"))
-        chrome_service.creation_flags = CREATE_NO_WINDOW
+        service = ChromeService(ChromeDriverManager().install())
+        service.creation_flags = CREATE_NO_WINDOW
 
-        driver = webdriver.Chrome(service = chrome_service, options = config)
+        driver = webdriver.Chrome(service = service, options = config)
 
     elif browser == "Firefox":
         config = webdriver.FirefoxOptions()
         config.add_argument('--headless')
         config.add_argument('--disable-infobars')
         config.add_argument('window-size=1920x1080')
-        #config.add_experimental_option('excludeSwitches', ['enable-logging'])
-    
-        firefox_service = FirefoxService(find_by_relative_path("Assets" + os.sep + "geckodriver.exe"))
-        firefox_service.creation_flags = CREATE_NO_WINDOW
 
-        driver = webdriver.Chrome(service = firefox_service, options = config)
+        service = FirefoxService(GeckoDriverManager().install())
+        service.creation_flags = CREATE_NO_WINDOW
+        driver = webdriver.Firefox(service = service, options = config)
 
     return driver
 
@@ -209,19 +215,29 @@ def process_start_download( link, cpu_number, browser ):
         for index in range(how_much_images): list_of_index.append(index)
 
         write_in_log_file("Downloading...")
+        browser = setup_browser(browser)
 
         with ThreadPool(cpu_number) as pool:
-            pool.starmap(process_download_file, zip(itertools.repeat(link), 
+            pool.starmap(thread_download_file, zip(itertools.repeat(link), 
                                                 list_of_index, 
                                                 itertools.repeat(target_dir),
                                                 itertools.repeat(browser)))
 
-
+        browser.quit()
+        
         write_in_log_file("Completed | " + target_dir)
-    except:
-        write_in_log_file("Ops, some error occured while downloading")
+    except Exception as e:
+        write_in_log_file('Error while upscaling' + '\n\n' + str(e)) 
+        import tkinter as tk
+        error_root = tk.Tk()
+        error_root.withdraw()
+        tk.messagebox.showerror(title   = 'Error', 
+                                message = 'Download failed caused by:\n\n' +
+                                           str(e) + '\n\n' +
+                                          'Please report the error on Github.com or Itch.io.' +
+                                          '\n\nThank you :)')
 
-def process_download_file(link, index, target_dir, browser):
+def thread_download_file(link, index, target_dir, browser):
     link = link + str(index)
        
     try:
@@ -242,11 +258,9 @@ def process_download_file(link, index, target_dir, browser):
 def download_image(file_url, file_name, target_dir, browser):
     filepath = target_dir + os.sep + file_name
 
-    browser = setup_browser(browser)
     browser.get(file_url)
     browser.execute_script("document.body.style.zoom = '90%'")
     browser.save_screenshot(filepath)
-    browser.close()
 
     crop_border(filepath)
 
