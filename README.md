@@ -47,7 +47,7 @@ Fapello.Downloader is completely written in Python, from backend to frontend. Ex
 * A folder named with the name associated with the downloaded link will be created in the FapelloDownloader directory (for example FapelloDownloader/mia-kha***/)
 
 ## Next steps. 🤫
-- [x] Support for other browser instead of Chrome (Brave / Firefox / Edge / Opera)
+- [x] Support for other browser more than Chrome (Firefox / Edge)
 - [ ] Update libraries 
     - [x] Python 3.10 (expecting ~10% more performance) 
     - [ ] Python 3.11 (expecting ~30% more performance)
