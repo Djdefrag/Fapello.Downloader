@@ -40,14 +40,13 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "v 5.0"
+version  = "v 6.0"
 
-# Download function rewritten to improve speed and resource consumption
-# FapelloDownloder will automatically download needed files for the selected browser
-# Fixed a bug when selecting Edge or Firefox download would not start
-# Updated libraries
-# Better error messages
-# General bugfix and improvements
+# fixed a bug that caused empty photos or other models to be downloaded 
+# fixed a bug that did not allow certain photos of some models to download properly
+# improving the quality of downloaded photos
+# updated libraries
+# bugfix and improvements
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -58,8 +57,9 @@ cpu_number            = 4
 windows_subversion    = int(platform.version().split('.')[2])
 
 global browser
-browser               = 'Chrome'
-
+browser            = 'Chrome'
+file_multiplier    = 1.2
+ 
 githubme           = "https://github.com/Djdefrag/Fapello.Downloader"
 itchme             = "https://jangystudio.itch.io/fapellodownloader"
 
@@ -119,19 +119,25 @@ def prepare_filename(file_url, index, file_type):
 
     return filename
 
+def find_between(s, start, end):
+    return (s.split(start))[1].split(end)[0]
+    
 def get_file_url(link):
     page = requests.get(link)
     soup = BeautifulSoup(page.content, "html.parser")
-    file_url = soup.find("div", class_="flex justify-between items-center")
+    file_url = str(soup.find("div", class_="flex justify-between items-center"))
 
-    if 'img alt' in str(file_url): 
-        # Photo
-        file_url = str(file_url).split("href=")[1].split("target")[0].replace('"', "")
-        file_type = "image"
-    else: 
+    if 'type="video/mp4' in str(file_url): 
         # Video
+        print('*** video')
         file_url = str(file_url).split("source src=")[1].split("type=")[0].replace('"', "")
         file_type = "video"
+    else: 
+        # Photo
+        print('*** image')
+        file_url = find_between(file_url.strip(), 'href="', '.jpg') + '.jpg'
+        print('   ' + file_url)
+        file_type = "image"
 
     return file_url, file_type
 
@@ -140,7 +146,7 @@ def setup_browser(browser):
         config = webdriver.EdgeOptions()
         config.add_argument('--headless')
         config.add_argument('--disable-infobars')
-        config.add_argument('window-size=1920x1080')        
+        config.add_argument('window-size=2560x1440')        
         config.add_experimental_option('excludeSwitches', ['enable-logging'])
 
         service = EdgeService(EdgeChromiumDriverManager().install())
@@ -152,7 +158,7 @@ def setup_browser(browser):
         config = webdriver.ChromeOptions()
         config.add_argument('--headless')
         config.add_argument('--disable-infobars')
-        config.add_argument('window-size=1920x1080')
+        config.add_argument('window-size=2560x1440')
         config.add_experimental_option('excludeSwitches', ['enable-logging'])
     
         service = ChromeService(ChromeDriverManager().install())
@@ -164,7 +170,7 @@ def setup_browser(browser):
         config = webdriver.FirefoxOptions()
         config.add_argument('--headless')
         config.add_argument('--disable-infobars')
-        config.add_argument('window-size=1920x1080')
+        config.add_argument('window-size=2560x1440')
 
         service = FirefoxService(GeckoDriverManager().install())
         service.creation_flags = CREATE_NO_WINDOW
@@ -209,21 +215,18 @@ def process_start_download( link, cpu_number, browser ):
         create_temp_dir(target_dir)
 
         how_much_images = int(get_number_of_images(link))  
-        how_much_images = round(how_much_images*1.1)
+        how_much_images = round(how_much_images * file_multiplier)
 
         list_of_index = []
         for index in range(how_much_images): list_of_index.append(index)
 
         write_in_log_file("Downloading...")
-        browser = setup_browser(browser)
 
         with ThreadPool(cpu_number) as pool:
             pool.starmap(thread_download_file, zip(itertools.repeat(link), 
                                                 list_of_index, 
                                                 itertools.repeat(target_dir),
                                                 itertools.repeat(browser)))
-
-        browser.quit()
         
         write_in_log_file("Completed | " + target_dir)
     except Exception as e:
@@ -255,14 +258,16 @@ def thread_download_file(link, index, target_dir, browser):
 
 
 
+
 def download_image(file_url, file_name, target_dir, browser):
-    filepath = target_dir + os.sep + file_name
+    if file_url != '' and target_dir.split(str(os.sep))[-1] in file_url:
+        browser = setup_browser(browser)
+        browser.get(file_url)
+        browser.execute_script("document.body.style.zoom = '90%'")
+        browser.save_screenshot(target_dir + os.sep + file_name)
+        browser.quit()
 
-    browser.get(file_url)
-    browser.execute_script("document.body.style.zoom = '90%'")
-    browser.save_screenshot(filepath)
-
-    crop_border(filepath)
+        crop_border(target_dir + os.sep + file_name)
 
 def download_video(file_url, file_name, target_dir):
     urllib.request.urlretrieve(file_url, target_dir + os.sep + file_name) 
@@ -316,7 +321,7 @@ def download_button_command():
         info_string.set("Please, insert a valid Fapello link")
     else:
         how_much_images = int(get_number_of_images(selected_link))  
-        how_much_images = round(how_much_images*1.1)
+        how_much_images = round(how_much_images * file_multiplier)
 
         place_stop_button()
         
@@ -328,7 +333,6 @@ def download_button_command():
                                         args   = (selected_link, how_much_images), 
                                         daemon = True)
         thread_wait.start()
-
 
 
 
@@ -364,8 +368,6 @@ def place_cpu_number_spinbox():
                                 y = 232,
                                 width  = 127,
                                 height = 40)
-
-
 
 def combobox_browser_selection(event):
     global browser
