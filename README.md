@@ -10,7 +10,7 @@
 <br>
 
 <div align="center">
-    <img src="https://user-images.githubusercontent.com/32263112/207787817-7ae3f9fd-82c1-4135-8422-b9f01963f59b.png"> </a> 
+    <img src="https://user-images.githubusercontent.com/32263112/215454971-5f6c16e7-f303-4877-bd2b-9aa049de60c9.PNG"> </a> 
 </div>
 
 
@@ -24,11 +24,11 @@ https://github.com/Djdefrag/RealESRScaler / RealESRScaler - image/video AI upsca
 ## How is made. 🛠
 
 Fapello.Downloader is completely written in Python, from backend to frontend. External packages are:
-- [ ] Core -> beautifulsoup / Selenium
-- [ ] GUI -> Tkinter / Tkdnd / Sv_ttk
-- [ ] Image/video -> OpenCV
-- [ ] Packaging   -> Pyinstaller
-- [ ] Miscellaneous -> Pywin32 / Win32mica / split_image
+- [ ] Core -> beautifulsoup / selenium
+- [ ] GUI -> tkinter / tkdnd / sv_ttk
+- [ ] Image/video -> openCV
+- [ ] Packaging   -> pyinstaller
+- [ ] Miscellaneous -> pywin32 / win32mica
 
 ## HOW TO USE. 👨‍💻
 #### Prerequisites: 
