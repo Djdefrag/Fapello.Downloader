@@ -30,7 +30,7 @@ Fapello.Downloader is completely written in Python, from backend to frontend. Ex
 - [ ] Packaging   -> pyinstaller
 - [ ] Miscellaneous -> pywin32 / win32mica
 
-## HOW TO USE. 👨‍💻
+## How to use. 👨‍💻
 #### Prerequisites: 
 * (Important!) FapelloDownloader will ONLY work with Chrome or Firefox or Edge installed. 
   
