@@ -14,7 +14,7 @@ import tkinter.font as tkFont
 import urllib.request
 import warnings
 import webbrowser
-from multiprocessing.pool import ThreadPool
+from concurrent.futures import ThreadPoolExecutor
 from subprocess import CREATE_NO_WINDOW
 from tkinter import PhotoImage, ttk
 
@@ -40,13 +40,13 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "v 6.0"
+version  = "v 1.7"
 
-# fixed a bug that caused empty photos or other models to be downloaded 
-# fixed a bug that did not allow certain photos of some models to download properly
-# improving the quality of downloaded photos
-# updated libraries
-# bugfix and improvements
+# optimized download phase
+# updated Python 3.10.9 => 3.10.10
+# updated dependencies
+# bugfixes and improvements
+# code cleaning
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -58,7 +58,7 @@ windows_subversion    = int(platform.version().split('.')[2])
 
 global browser
 browser            = 'Chrome'
-file_multiplier    = 1.2
+file_multiplier    = 1.1
  
 githubme           = "https://github.com/Djdefrag/Fapello.Downloader"
 itchme             = "https://jangystudio.itch.io/fapellodownloader"
@@ -129,15 +129,18 @@ def get_file_url(link):
 
     if 'type="video/mp4' in str(file_url): 
         # Video
-        print('*** video')
         file_url = str(file_url).split("source src=")[1].split("type=")[0].replace('"', "")
         file_type = "video"
+
+        print('> video')
+        print(' ' + file_url)
     else: 
         # Photo
-        print('*** image')
         file_url = find_between(file_url.strip(), 'href="', '.jpg') + '.jpg'
-        print('   ' + file_url)
         file_type = "image"
+
+        print('> image')
+        print(' ' + file_url)
 
     return file_url, file_type
 
@@ -222,18 +225,24 @@ def process_start_download( link, cpu_number, browser ):
 
         write_in_log_file("Downloading...")
 
-        with ThreadPool(cpu_number) as pool:
-            pool.starmap(thread_download_file, zip(itertools.repeat(link), 
-                                                list_of_index, 
-                                                itertools.repeat(target_dir),
-                                                itertools.repeat(browser)))
+        #with ThreadPool(cpu_number) as pool:
+        #    pool.starmap(thread_download_file, 
+        #                 zip(itertools.repeat(link),
+        #                 list_of_index,
+        #                 itertools.repeat(target_dir),
+        #                 itertools.repeat(browser)))
+            
+        with ThreadPoolExecutor(max_workers=cpu_number) as executor:
+            executor.map(thread_download_file, 
+                        itertools.repeat(link),
+                        list_of_index,
+                        itertools.repeat(target_dir),
+                        itertools.repeat(browser))
         
         write_in_log_file("Completed | " + target_dir)
     except Exception as e:
-        write_in_log_file('Error while upscaling' + '\n\n' + str(e)) 
+        write_in_log_file('Error while downloading' + '\n\n' + str(e)) 
         import tkinter as tk
-        error_root = tk.Tk()
-        error_root.withdraw()
         tk.messagebox.showerror(title   = 'Error', 
                                 message = 'Download failed caused by:\n\n' +
                                            str(e) + '\n\n' +
@@ -555,29 +564,6 @@ def place_stop_button():
 # ---------------------- /Functions ----------------------
 
 
-def window_resize(event):    # WORK IN PROGRESS
-    global window_width
-    global window_height
-
-    if event.width == window_width and event.height == window_height:
-        print("Moved: " + str(window_width)+"x"+str(window_height) + " --> " + str(event.width)+"x"+str(event.height))
-        window_width  = event.width
-        window_height = event.height
-        Background.place(x = 0, y = 0, width  = window_width, height = window_height)
-
-    elif event.x <= 0 or event.y <= 0:
-        print("Maximized: " + str(window_width)+"x"+str(window_height) + " --> " + str(event.width)+"x"+str(event.height))
-        window_width  = event.width
-        window_height = event.height
-
-        Background.place(x = 0, y = 0, width  = window_width, height = window_height)
-    else:
-        print('Resized: ' + str(window_width)+"x"+str(window_height) + " --> " + str(event.width)+"x"+str(event.height))
-        window_width  = event.width
-        window_height = event.height
-
-        Background.place(x = 0, y = 0, width  = window_width, height = window_height)
-
 def apply_windows_dark_bar(window_root):
     window_root.update()
     DWMWA_USE_IMMERSIVE_DARK_MODE = 20
@@ -657,7 +643,6 @@ if __name__ == "__main__":
 
     app = App(root)
     root.update()
-    #root.bind('<Configure>', window_resize) # resize event
     root.mainloop()
     
 
