@@ -10,7 +10,7 @@
 <br>
 
 <div align="center">
-    <img src="https://user-images.githubusercontent.com/32263112/224935025-a6f957a8-aa16-4ae8-abbc-bf582657a376.png"> </a> 
+    <img src="https://user-images.githubusercontent.com/32263112/225629433-7707ebbc-c105-4bf0-b6ac-7ec4cf958db9.PNG"> </a> 
 </div>
 
 
@@ -18,27 +18,19 @@
 
 https://github.com/Djdefrag/QualityScaler / QualityScaler - image/video AI upscaler app (BSRGAN)
 
-https://github.com/Djdefrag/RealESRScaler / RealESRScaler - image/video AI upscaler app (Real-ESRGAN)
+https://github.com/Djdefrag/RealESRScaler / RealScaler - fast image/video AI upscaler app (Real-ESRGAN)
 
 
 ## How is made. 🛠
 
 Fapello.Downloader is completely written in Python, from backend to frontend. External packages are:
-- [ ] Core -> beautifulsoup / selenium
+- [ ] Core -> beautifulsoup
 - [ ] GUI -> tkinter / tkdnd / sv_ttk
 - [ ] Image/video -> openCV
 - [ ] Packaging   -> pyinstaller
 - [ ] Miscellaneous -> pywin32 / win32mica
 
 ## How to use. 👨‍💻
-#### Prerequisites: 
-* (Important!) FapelloDownloader will ONLY work with Chrome or Firefox or Edge installed. 
-  
-#### Installation:
- * download Fapello.Downloader release .zip
- * unzip using 7zip or similar
-
-#### HOW TO USE.
 * Execute FapelloDownloader.exe
 * Copy the Fapello link of interest (for example: https://fapello.com/mia-kha***/)
 * Paste the copied link in FapelloDownloader textbox
@@ -47,7 +39,6 @@ Fapello.Downloader is completely written in Python, from backend to frontend. Ex
 * A folder named with the name associated with the downloaded link will be created in the FapelloDownloader directory (for example FapelloDownloader/mia-kha***/)
 
 ## Next steps. 🤫
-- [x] Support for other browser more than Chrome (Firefox / Edge)
 - [ ] Update libraries 
     - [x] Python 3.10 (expecting ~10% more performance) 
     - [ ] Python 3.11 (expecting ~30% more performance)
