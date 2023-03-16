@@ -14,21 +14,13 @@ import tkinter.font as tkFont
 import urllib.request
 import warnings
 import webbrowser
-from concurrent.futures import ThreadPoolExecutor
-from subprocess import CREATE_NO_WINDOW
+from multiprocessing.pool import ThreadPool
 from tkinter import PhotoImage, ttk
 
 import cv2
 import requests
 import tkinterDnD
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.edge.service import Service as EdgeService
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from win32mica import MICAMODE, ApplyMica
 
 import sv_ttk
@@ -40,13 +32,16 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "v 1.7"
+version  = "v 2.0"
 
-# optimized download phase
-# updated Python 3.10.9 => 3.10.10
-# updated dependencies
-# bugfixes and improvements
-# code cleaning
+# FapelloDownloader is now x100 times faster and x100 times lighter
+# the quality of the downloaded images is now identical to the quality of the original
+# remove browsers dependency:
+#   no longer require to select the browser to use
+#   no longer require the browser to be installed
+# removed unused code
+# optimized dependencies imports
+# bugfixes and other improvements
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -55,13 +50,9 @@ window_height         = 650
 text_color            = "#F0F0F0"
 cpu_number            = 4
 windows_subversion    = int(platform.version().split('.')[2])
-
-global browser
-browser            = 'Chrome'
-file_multiplier    = 1.1
  
-githubme           = "https://github.com/Djdefrag/Fapello.Downloader"
-itchme             = "https://jangystudio.itch.io/fapellodownloader"
+githubme              = "https://github.com/Djdefrag/Fapello.Downloader"
+itchme                = "https://jangystudio.itch.io/fapellodownloader"
 
 ctypes.windll.shcore.SetProcessDpiAwareness(True)
 scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
@@ -144,43 +135,6 @@ def get_file_url(link):
 
     return file_url, file_type
 
-def setup_browser(browser):
-    if browser == "Edge":
-        config = webdriver.EdgeOptions()
-        config.add_argument('--headless')
-        config.add_argument('--disable-infobars')
-        config.add_argument('window-size=2560x1440')        
-        config.add_experimental_option('excludeSwitches', ['enable-logging'])
-
-        service = EdgeService(EdgeChromiumDriverManager().install())
-        service.creation_flags = CREATE_NO_WINDOW
-
-        driver = webdriver.Edge(service = service, options = config)
-
-    elif browser == "Chrome":
-        config = webdriver.ChromeOptions()
-        config.add_argument('--headless')
-        config.add_argument('--disable-infobars')
-        config.add_argument('window-size=2560x1440')
-        config.add_experimental_option('excludeSwitches', ['enable-logging'])
-    
-        service = ChromeService(ChromeDriverManager().install())
-        service.creation_flags = CREATE_NO_WINDOW
-
-        driver = webdriver.Chrome(service = service, options = config)
-
-    elif browser == "Firefox":
-        config = webdriver.FirefoxOptions()
-        config.add_argument('--headless')
-        config.add_argument('--disable-infobars')
-        config.add_argument('window-size=2560x1440')
-
-        service = FirefoxService(GeckoDriverManager().install())
-        service.creation_flags = CREATE_NO_WINDOW
-        driver = webdriver.Firefox(service = service, options = config)
-
-    return driver
-
 def get_number_of_images(link):
     page = requests.get(link)
     soup = BeautifulSoup(page.content, "html.parser")
@@ -207,7 +161,7 @@ def crop_border(input_img):
 
     cv2.imwrite(input_img, img = crop)
 
-def process_start_download( link, cpu_number, browser ):
+def process_start_download( link, cpu_number):
     actual_dir    = get_actual_path()
     dir_name      = link.split("/")[3]
     target_dir    = actual_dir + os.sep + dir_name
@@ -217,29 +171,22 @@ def process_start_download( link, cpu_number, browser ):
     try:
         create_temp_dir(target_dir)
 
-        how_much_images = int(get_number_of_images(link))  
-        how_much_images = round(how_much_images * file_multiplier)
+        how_many_images = int(get_number_of_images(link))  
+        how_many_images = round(how_many_images)
 
         list_of_index = []
-        for index in range(how_much_images): list_of_index.append(index)
+        for index in range(how_many_images): list_of_index.append(index)
 
         write_in_log_file("Downloading...")
 
-        #with ThreadPool(cpu_number) as pool:
-        #    pool.starmap(thread_download_file, 
-        #                 zip(itertools.repeat(link),
-        #                 list_of_index,
-        #                 itertools.repeat(target_dir),
-        #                 itertools.repeat(browser)))
+        with ThreadPool(cpu_number) as pool:
+            pool.starmap(thread_download_file, 
+                         zip(itertools.repeat(link),
+                         list_of_index,
+                         itertools.repeat(target_dir)))
             
-        with ThreadPoolExecutor(max_workers=cpu_number) as executor:
-            executor.map(thread_download_file, 
-                        itertools.repeat(link),
-                        list_of_index,
-                        itertools.repeat(target_dir),
-                        itertools.repeat(browser))
-        
         write_in_log_file("Completed | " + target_dir)
+
     except Exception as e:
         write_in_log_file('Error while downloading' + '\n\n' + str(e)) 
         import tkinter as tk
@@ -249,7 +196,7 @@ def process_start_download( link, cpu_number, browser ):
                                           'Please report the error on Github.com or Itch.io.' +
                                           '\n\nThank you :)')
 
-def thread_download_file(link, index, target_dir, browser):
+def thread_download_file(link, index, target_dir):
     link = link + str(index)
        
     try:
@@ -257,7 +204,7 @@ def thread_download_file(link, index, target_dir, browser):
         file_name = prepare_filename(file_url, index, file_type)
 
         if file_type == "image":
-            download_image(file_url, file_name, target_dir, browser)
+            download_image(file_url, file_name, target_dir)
             x = 1 + "x"
         elif file_type == "video":
             download_video(file_url, file_name, target_dir)
@@ -268,18 +215,31 @@ def thread_download_file(link, index, target_dir, browser):
 
 
 
-def download_image(file_url, file_name, target_dir, browser):
+def download_image(file_url, file_name, target_dir):
     if file_url != '' and target_dir.split(str(os.sep))[-1] in file_url:
-        browser = setup_browser(browser)
-        browser.get(file_url)
-        browser.execute_script("document.body.style.zoom = '90%'")
-        browser.save_screenshot(target_dir + os.sep + file_name)
-        browser.quit()
+        opener = urllib.request.build_opener()
+        opener.addheaders = [
+                                (
+                                "User-Agent",
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
+                                )
+                            ]                   
+        urllib.request.install_opener(opener)
 
-        crop_border(target_dir + os.sep + file_name)
+        urllib.request.urlretrieve(file_url, target_dir + os.sep + file_name)
 
 def download_video(file_url, file_name, target_dir):
-    urllib.request.urlretrieve(file_url, target_dir + os.sep + file_name) 
+    if file_url != '' and target_dir.split(str(os.sep))[-1] in file_url:
+        opener = urllib.request.build_opener()
+        opener.addheaders = [
+                                (
+                                "User-Agent",
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
+                                )
+                            ]                   
+        urllib.request.install_opener(opener)
+
+        urllib.request.urlretrieve(file_url, target_dir + os.sep + file_name)
 
 def thread_check_steps_download( link, how_many_files ):
     time.sleep(2)
@@ -313,9 +273,8 @@ def thread_check_steps_download( link, how_many_files ):
 def download_button_command():
     global process_download
     global cpu_number
-    global browser
 
-    info_string.set("...")
+    info_string.set("Checking link")
 
     try:
         cpu_number = int(float(str(selected_cpu_number.get())))
@@ -329,13 +288,15 @@ def download_button_command():
     elif selected_link == "":
         info_string.set("Please, insert a valid Fapello link")
     else:
+        info_string.set("Starting download")
+
         how_much_images = int(get_number_of_images(selected_link))  
-        how_much_images = round(how_much_images * file_multiplier)
+        how_much_images = round(how_much_images)
 
         place_stop_button()
         
         process_download = multiprocessing.Process(target = process_start_download,
-                                                   args   = (selected_link, cpu_number, browser))
+                                                   args   = (selected_link, cpu_number))
         process_download.start()
 
         thread_wait = threading.Thread( target = thread_check_steps_download,
@@ -377,52 +338,6 @@ def place_cpu_number_spinbox():
                                 y = 232,
                                 width  = 127,
                                 height = 40)
-
-def combobox_browser_selection(event):
-    global browser
-
-    selected_option = str(selected_browser.get())
-    browser_combobox.set('')
-    browser_combobox.set(selected_option)
-    browser = selected_option
-
-def place_browser_combobox():
-
-    browser_list = ['Chrome', 'Firefox', 'Edge']
-
-    browser_container = ttk.Notebook(root)
-    browser_container.place(x = window_width - 285 - 30, 
-                            y = 300, 
-                            width  = 285,
-                            height = 65)
-
-    global browser_combobox
-    browser_combobox = ttk.Combobox(root, 
-                            textvariable = selected_browser, 
-                            justify      = 'center',
-                            foreground   = text_color,
-                            values       = browser_list,
-                            state        = 'readonly',
-                            takefocus    = False,
-                            font         = bold12)
-    browser_combobox.place( x = window_width - 130 - 43, 
-                            y = 312, 
-                            width  = 130, 
-                            height = 38 )
-
-    browser_combobox.bind('<<ComboboxSelected>>', combobox_browser_selection)
-    browser_combobox.set(browser_list[0])
-
-    browser_label = ttk.Label(root, 
-                                font       = bold11, 
-                                foreground = text_color, 
-                                justify    = 'left', 
-                                relief     = 'flat', 
-                                text       = " Browser ")
-    browser_label.place(x = window_width - 127 - 173,
-                        y = 312,
-                        width  = 127,
-                        height = 40)
 
 
 
@@ -615,7 +530,6 @@ class App:
 
         place_entrybox_widget()
         place_cpu_number_spinbox()
-        place_browser_combobox()
         place_message_box()             
         place_download_button()
 
@@ -626,11 +540,9 @@ if __name__ == "__main__":
     selected_url        = tk.StringVar()
     info_string         = tk.StringVar()
     selected_cpu_number = tk.StringVar()
-    selected_browser    = tk.StringVar()
 
     normal12 = tkFont.Font(family = default_font, size   = round(12 * font_scale), weight = 'normal')
     normal13 = tkFont.Font(family = default_font, size   = round(13 * font_scale), weight = 'normal')
-
 
     bold10 = tkFont.Font(family = default_font, size   = round(10 * font_scale), weight = 'bold')
     bold11 = tkFont.Font(family = default_font, size   = round(11 * font_scale), weight = 'bold')

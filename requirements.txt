@@ -1,7 +1,5 @@
 #CORE
-beautifulsoup4 
-selenium
-webdriver_manager
+beautifulsoup4
 opencv-python-headless
 
 #UTILS
@@ -10,10 +8,9 @@ python-tkdnd
 ttkwidgets
 pyinstaller==5.6.2
 pyinstaller-hooks-contrib
-pywin32
 moviepy
 win32mica
-sv_ttk
+#sv_ttk
 
 
 
