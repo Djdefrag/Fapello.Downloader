@@ -26,7 +26,6 @@ https://github.com/Djdefrag/RealESRScaler / RealScaler - fast image/video AI ups
 Fapello.Downloader is completely written in Python, from backend to frontend. External packages are:
 - [ ] Core -> beautifulsoup
 - [ ] GUI -> tkinter / tkdnd / sv_ttk
-- [ ] Image/video -> openCV
 - [ ] Packaging   -> pyinstaller
 - [ ] Miscellaneous -> pywin32 / win32mica
 
