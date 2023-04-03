@@ -32,16 +32,14 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "v 2.0"
+version  = "2.1"
 
-# FapelloDownloader is now x100 times faster and x100 times lighter
-# the quality of the downloaded images is now identical to the quality of the original
-# remove browsers dependency:
-#   no longer require to select the browser to use
-#   no longer require the browser to be installed
-# removed unused code
-# optimized dependencies imports
-# bugfixes and other improvements
+# Added a completion message when the download finishes
+# Partially fixed the problem with some Fapello models having an inconsistency between the file index and the actual number of files 
+# Setted .log file permissions to 777 (maximum permissions), this should solve the problem of reading and writing this file
+# Setted temp folder permissions to 777 (maximum permissions), this should solve the problem of reading and writing in this folder
+# General bugfix and improvements
+# Updated dependencies
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -76,24 +74,23 @@ def find_by_relative_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def write_in_log_file(text_to_insert):
-    log_file_name   = app_name + ".log"
-    with open(log_file_name,'w') as log_file:
+    log_file_name = app_name + ".log"
+    with open(log_file_name,'w') as log_file: 
+        os.chmod(log_file_name, 0o777)
         log_file.write(text_to_insert) 
     log_file.close()
 
 def read_log_file():
-    log_file_name   = app_name + ".log"
-    with open(log_file_name,'r') as log_file:
+    log_file_name = app_name + ".log"
+    with open(log_file_name,'r') as log_file: 
+        os.chmod(log_file_name, 0o777)
         step = log_file.readline()
     log_file.close()
     return step
 
 def create_temp_dir(name_dir):
-    if os.path.exists(name_dir):
-        shutil.rmtree(name_dir)
-
-    if not os.path.exists(name_dir):
-        os.makedirs(name_dir)
+    if os.path.exists(name_dir): shutil.rmtree(name_dir)
+    if not os.path.exists(name_dir): os.makedirs(name_dir, mode=0o777)
 
 def get_actual_path():
     path = find_by_relative_path("logo.png").replace("logo.png", "")
@@ -120,24 +117,21 @@ def get_file_url(link):
 
     if 'type="video/mp4' in str(file_url): 
         # Video
-        file_url = str(file_url).split("source src=")[1].split("type=")[0].replace('"', "")
+        file_url  = str(file_url).split("src=")[1].split("type=")[0].replace('"', "")
         file_type = "video"
-
-        print('> video')
-        print(' ' + file_url)
+        print('> video: ' + file_url)
     else: 
         # Photo
-        file_url = find_between(file_url.strip(), 'href="', '.jpg') + '.jpg'
+        file_url  = file_url.split("src=")[1].split(".jpg")[0].replace('"', '') + '.jpg'
         file_type = "image"
-
-        print('> image')
-        print(' ' + file_url)
+        print('> image: ' + file_url)
 
     return file_url, file_type
 
 def get_number_of_images(link):
     page = requests.get(link)
     soup = BeautifulSoup(page.content, "html.parser")
+    print(soup)
     media_number = soup.find_all("div", class_="flex lg:flex-row flex-col")
     media_number = str(media_number).split(">")[1].split("<")[0]
     return media_number
@@ -172,7 +166,7 @@ def process_start_download( link, cpu_number):
         create_temp_dir(target_dir)
 
         how_many_images = int(get_number_of_images(link))  
-        how_many_images = round(how_many_images)
+        how_many_images = round(how_many_images * 2)
 
         list_of_index = []
         for index in range(how_many_images): list_of_index.append(index)
@@ -185,7 +179,11 @@ def process_start_download( link, cpu_number):
                          list_of_index,
                          itertools.repeat(target_dir)))
             
-        write_in_log_file("Completed | " + target_dir)
+        write_in_log_file("Completed")
+        import tkinter as tk
+        tk.messagebox.showinfo(title   = 'Completed', 
+                               message = 'Files saved in: \n' + 
+                                         target_dir + '\n')
 
     except Exception as e:
         write_in_log_file('Error while downloading' + '\n\n' + str(e)) 
@@ -197,18 +195,20 @@ def process_start_download( link, cpu_number):
                                           '\n\nThank you :)')
 
 def thread_download_file(link, index, target_dir):
-    link = link + str(index)
-       
+    link = link + str(index)       
+    model_name = link.split('/')[3]
     try:
         file_url, file_type = get_file_url(link)
-        file_name = prepare_filename(file_url, index, file_type)
+        
+        if model_name in file_url:
+            file_name = prepare_filename(file_url, index, file_type)
 
-        if file_type == "image":
-            download_image(file_url, file_name, target_dir)
-            x = 1 + "x"
-        elif file_type == "video":
-            download_video(file_url, file_name, target_dir)
-            x = 1 + "x"
+            if file_type == "image":
+                download_image(file_url, file_name, target_dir)
+                x = 1 + "x"
+            elif file_type == "video":
+                download_video(file_url, file_name, target_dir)
+                x = 1 + "x"
     except:
         pass
 
