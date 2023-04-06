@@ -32,13 +32,10 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "2.1"
+version  = "2.2"
 
-# Added a completion message when the download finishes
-# Partially fixed the problem with some Fapello models having an inconsistency between the file index and the actual number of files 
-# Setted .log file permissions to 777 (maximum permissions), this should solve the problem of reading and writing this file
-# Setted temp folder permissions to 777 (maximum permissions), this should solve the problem of reading and writing in this folder
-# General bugfix and improvements
+# Fixed an issue for some Fapello models that did not allow downloading all files 
+# Bugfixes and improvements
 # Updated dependencies
 
 default_font          = 'Segoe UI'
@@ -166,7 +163,7 @@ def process_start_download( link, cpu_number):
         create_temp_dir(target_dir)
 
         how_many_images = int(get_number_of_images(link))  
-        how_many_images = round(how_many_images * 2)
+        how_many_images = round(how_many_images * 5)
 
         list_of_index = []
         for index in range(how_many_images): list_of_index.append(index)
@@ -277,7 +274,7 @@ def download_button_command():
     info_string.set("Checking link")
 
     try:
-        cpu_number = int(float(str(selected_cpu_number.get())))
+        cpu_number = int(float(str(selected_cpu_number.get()))) * 2
     except:
         info_string.set("Cpu number must be a numeric value")
         return
