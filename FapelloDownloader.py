@@ -32,11 +32,7 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "2.2"
-
-# Fixed an issue for some Fapello models that did not allow downloading all files 
-# Bugfixes and improvements
-# Updated dependencies
+version  = "2.3"
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -88,10 +84,6 @@ def read_log_file():
 def create_temp_dir(name_dir):
     if os.path.exists(name_dir): shutil.rmtree(name_dir)
     if not os.path.exists(name_dir): os.makedirs(name_dir, mode=0o777)
-
-def get_actual_path():
-    path = find_by_relative_path("logo.png").replace("logo.png", "")
-    return path
 
 def prepare_filename(file_url, index, file_type):
     first_part_filename = str(file_url).split("/")[-3]
@@ -153,9 +145,8 @@ def crop_border(input_img):
     cv2.imwrite(input_img, img = crop)
 
 def process_start_download( link, cpu_number):
-    actual_dir    = get_actual_path()
     dir_name      = link.split("/")[3]
-    target_dir    = actual_dir + os.sep + dir_name
+    target_dir    = dir_name
 
     write_in_log_file('Preparing...')
     
@@ -177,10 +168,6 @@ def process_start_download( link, cpu_number):
                          itertools.repeat(target_dir)))
             
         write_in_log_file("Completed")
-        import tkinter as tk
-        tk.messagebox.showinfo(title   = 'Completed', 
-                               message = 'Files saved in: \n' + 
-                                         target_dir + '\n')
 
     except Exception as e:
         write_in_log_file('Error while downloading' + '\n\n' + str(e)) 
@@ -241,9 +228,8 @@ def download_video(file_url, file_name, target_dir):
 def thread_check_steps_download( link, how_many_files ):
     time.sleep(2)
 
-    actual_dir    = get_actual_path()
     dir_name      = link.split("/")[3]
-    target_dir    = actual_dir + os.sep + dir_name
+    target_dir    = dir_name
 
     try:
         while True:
@@ -301,8 +287,6 @@ def download_button_command():
                                         daemon = True)
         thread_wait.start()
 
-
-
 def place_cpu_number_spinbox():
     cpu_number_container = ttk.Notebook(root)
     cpu_number_container.place(x = window_width - 285 - 30, 
@@ -335,8 +319,6 @@ def place_cpu_number_spinbox():
                                 y = 232,
                                 width  = 127,
                                 height = 40)
-
-
 
 def place_itch_button():
     global logo_itch

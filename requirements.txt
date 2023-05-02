@@ -4,8 +4,6 @@ beautifulsoup4
 #UTILS
 python-tkdnd
 ttkwidgets
-pyinstaller
-pyinstaller-hooks-contrib
 moviepy
 win32mica
 
