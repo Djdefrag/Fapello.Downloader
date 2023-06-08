@@ -17,7 +17,6 @@ import webbrowser
 from multiprocessing.pool import ThreadPool
 from tkinter import PhotoImage, ttk
 
-import cv2
 import requests
 import tkinterDnD
 from bs4 import BeautifulSoup
@@ -32,7 +31,7 @@ global window_height
 global app_name
 
 app_name = "Fapello.Downloader"
-version  = "2.3"
+version  = "2.4"
 
 default_font          = 'Segoe UI'
 background_color      = "#181818"
@@ -50,10 +49,10 @@ scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 font_scale = round(1/scaleFactor, 1)
 
 
+
 # ---------------------- Functions ----------------------
 
 # ---------------------- Utils ----------------------
-
 
 def openitch():
     webbrowser.open(itchme, new=1)
@@ -117,34 +116,27 @@ def get_file_url(link):
 
     return file_url, file_type
 
-def get_number_of_images(link):
-    page = requests.get(link)
+def get_number_of_images(url):
+    page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
-    print(soup)
-    media_number = soup.find_all("div", class_="flex lg:flex-row flex-col")
-    media_number = str(media_number).split(">")[1].split("<")[0]
-    return media_number
+
+    link_array = []
+
+    for link in soup.findAll('a'):
+        link = link.get('href')
+        if url in link: link_array.append(link.split('/')[-2])
+
+    for link in link_array:
+        if link.isnumeric():
+            return link
+
 
 
 # ---------------------- /Utils ----------------------
 
 # ---------------------- Core ----------------------
 
-
-def crop_border(input_img):
-    image = cv2.imread(input_img)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    thresh = cv2.threshold(gray, 255, 255, cv2.THRESH_TRIANGLE)[1]
-
-    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = sorted(contours, key=cv2.contourArea, reverse=True)
-    cnt = cnts[0]
-    x,y,w,h = cv2.boundingRect(cnt)
-    crop = image[y:y+h,x:x+w]
-
-    cv2.imwrite(input_img, img = crop)
-
-def process_start_download( link, cpu_number):
+def process_start_download(link, cpu_number):
     dir_name      = link.split("/")[3]
     target_dir    = dir_name
 
@@ -154,7 +146,6 @@ def process_start_download( link, cpu_number):
         create_temp_dir(target_dir)
 
         how_many_images = int(get_number_of_images(link))  
-        how_many_images = round(how_many_images * 5)
 
         list_of_index = []
         for index in range(how_many_images): list_of_index.append(index)
@@ -195,9 +186,6 @@ def thread_download_file(link, index, target_dir):
                 x = 1 + "x"
     except:
         pass
-
-
-
 
 def download_image(file_url, file_name, target_dir):
     if file_url != '' and target_dir.split(str(os.sep))[-1] in file_url:
@@ -248,10 +236,10 @@ def thread_check_steps_download( link, how_many_files ):
         place_download_button()
 
 
+
 # ---------------------- /Core ----------------------
 
 # ---------------------- GUI related ----------------------
-
 
 def download_button_command():
     global process_download
@@ -260,7 +248,7 @@ def download_button_command():
     info_string.set("Checking link")
 
     try:
-        cpu_number = int(float(str(selected_cpu_number.get()))) * 2
+        cpu_number = int(float(str(selected_cpu_number.get())))
     except:
         info_string.set("Cpu number must be a numeric value")
         return
@@ -274,7 +262,6 @@ def download_button_command():
         info_string.set("Starting download")
 
         how_much_images = int(get_number_of_images(selected_link))  
-        how_much_images = round(how_much_images)
 
         place_stop_button()
         
@@ -453,10 +440,10 @@ def place_stop_button():
     Stop_button["command"] = lambda: stop_button_command()
 
 
+
 # ---------------------- /GUI related ----------------------
 
 # ---------------------- /Functions ----------------------
-
 
 def apply_windows_dark_bar(window_root):
     window_root.update()
