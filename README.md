@@ -10,9 +10,8 @@
 <br>
 
 <div align="center">
-    <img src="https://user-images.githubusercontent.com/32263112/225629433-7707ebbc-c105-4bf0-b6ac-7ec4cf958db9.PNG"> </a> 
+    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/e0c266b5-d3ea-4457-9b6a-af6d73db9889"> </a> 
 </div>
-
 
 ## Other projects.🤓
 
@@ -24,10 +23,9 @@ https://github.com/Djdefrag/RealESRScaler / RealScaler - fast image/video AI ups
 ## How is made. 🛠
 
 Fapello.Downloader is completely written in Python, from backend to frontend. External packages are:
-- [ ] Core -> beautifulsoup
-- [ ] GUI -> tkinter / tkdnd / sv_ttk
+- [ ] Core -> beautifulsoup / requests
+- [ ] GUI -> customtkinter
 - [ ] Packaging   -> pyinstaller
-- [ ] Miscellaneous -> pywin32 / win32mica
 
 ## How to use. 👨‍💻
 * Execute FapelloDownloader.exe
