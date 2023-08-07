@@ -1,0 +1,23 @@
+Disclaimer of Liability
+
+Please read this disclaimer carefully before using our app. By using the app, you agree to be bound by the terms and conditions stated below. If you do not agree to these terms, do not use the application.
+
+Usage Responsibility:
+The app allows users to download and access various types of content. The user assumes full responsibility for the use of the app and any content downloaded through it. The app developer disclaims any liability for how users choose to use the app and the consequences of such use.
+
+Content Ownership:
+The app developer does not claim ownership of the content downloaded through the app. Users are solely responsible for ensuring that the downloaded content complies with copyright laws, licenses, and terms of use of the respective content owners.
+
+No Legal Advice:
+The app developer is not a legal expert and does not provide legal advice. The app's information and functionality are provided for general informational purposes only and should not be considered legal advice. Users should consult appropriate legal professionals for legal matters.
+
+Indemnification:
+To the extent permitted by law, users agree to indemnify and hold harmless the app developer, its affiliates, employees, and partners from any claims, losses, liabilities, damages, expenses, or demands arising from their use of the app, including any violation of applicable laws or rights of third parties.
+
+Limitation of Liability:
+In no event shall the app developer be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising out of or in connection with the use or inability to use the app, even if advised of the possibility of such damages.
+
+Changes to the Disclaimer:
+The app developer reserves the right to modify or update this disclaimer at any time without prior notice. It is the user's responsibility to review this disclaimer periodically for changes.
+
+By using this app, you acknowledge that you have read and understood this disclaimer and agree to its terms.

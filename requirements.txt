@@ -1,11 +1,10 @@
-#CORE
+# CORE
 beautifulsoup4
+requests
+Pillow
 
-#UTILS
-python-tkdnd
-ttkwidgets
-moviepy
-win32mica
+# GUI
+customtkinter
 
 
 
