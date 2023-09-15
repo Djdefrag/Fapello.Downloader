@@ -1,9 +1,11 @@
 <div align="center">
     <br>
     <img src="https://user-images.githubusercontent.com/32263112/205343453-e2f61261-3fb4-4d9b-8fe7-2be67fc0fcfb.png" width="175"> </a> 
-    <br><br> Fapello.Downloader - NSFW Windows app to batch download images and videos from Fapello.com <br><br>
+    <br><br> Fapello.Downloader - NSFW images/videos downloader app <br><br>
     <a href="https://jangystudio.itch.io/fapellodownloader">
-         <img src="https://user-images.githubusercontent.com/86362423/162710522-c40c4f39-a6b9-48bc-84bc-1c6b78319f01.png" width="200">
+        <button>
+            <img src="https://static.itch.io/images/badge-color.svg" width="225" height="70">
+        </button>     
     </a>
 </div>
 
@@ -15,9 +17,9 @@
 
 ## Other projects.🤓
 
-https://github.com/Djdefrag/QualityScaler / QualityScaler - image/video AI upscaler app (BSRGAN)
-
-https://github.com/Djdefrag/RealESRScaler / RealScaler - fast image/video AI upscaler app (Real-ESRGAN)
+- https://github.com/Djdefrag/QualityScaler / QualityScaler - image/video AI upscaler app
+- https://github.com/Djdefrag/RealESRScaler / RealScaler -  image/video AI upscaler app (Real-ESRGAN)
+- https://github.com/Djdefrag/FluidFrames.RIFE / FluidFrames.RIFE - video AI interpolation app (RIFE-HDv3)
 
 
 ## How is made. 🛠
@@ -28,12 +30,11 @@ Fapello.Downloader is completely written in Python, from backend to frontend. Ex
 - [ ] Packaging   -> pyinstaller
 
 ## How to use. 👨‍💻
-* Execute FapelloDownloader.exe
 * Copy the Fapello link of interest (for example: https://fapello.com/mia-kha***/)
 * Paste the copied link in FapelloDownloader textbox
 * Press Download button
 * Wait for the download to complete
-* A folder named with the name associated with the downloaded link will be created in the FapelloDownloader directory (for example FapelloDownloader/mia-kha***/)
+* A folder will be created with all images/videos
 
 ## Next steps. 🤫
 - [ ] Update libraries 
