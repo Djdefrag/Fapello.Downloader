@@ -20,10 +20,7 @@ from customtkinter import (CTk,
                            CTkEntry, 
                            CTkFont, 
                            CTkImage,
-                           CTkLabel, 
-                           CTkOptionMenu, 
-                           CTkScrollableFrame,
-                           filedialog, 
+                           CTkLabel,
                            set_appearance_mode,
                            set_default_color_theme)
 from PIL import Image
@@ -31,45 +28,38 @@ from PIL import Image
 warnings.filterwarnings("ignore")
 
 app_name = "Fapello.Downloader"
-version  = "3.0"
+version  = "3.1"
 
-text_color            = "#F0F0F0"
-app_name_color        = "#ffbf00"
+text_color      = "#F0F0F0"
+app_name_color  = "#ffbf00"
  
-githubme              = "https://github.com/Djdefrag/Fapello.Downloader"
-itchme                = "https://jangystudio.itch.io/fapellodownloader"
-telegramme            = "https://linktr.ee/j3ngystudio"
+githubme     = "https://github.com/Djdefrag/Fapello.Downloader"
+telegramme   = "https://linktr.ee/j3ngystudio"
 
+log_file_path  = f"{app_name}.log"
 
-# ---------------------- Functions ----------------------
-
-# ---------------------- Utils ----------------------
-
-def openitch(): webbrowser.open(itchme, new=1)
+# Utils 
 
 def opengithub(): webbrowser.open(githubme, new=1)
 
 def opentelegram(): webbrowser.open(telegramme, new=1)
 
-def find_by_relative_path(relative_path):
-    base_path = getattr(sys, '_MEIPASS', os.path.dirname(
-        os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
-
 def write_in_log_file(text_to_insert):
-    log_file_name = app_name + ".log"
-    with open(log_file_name,'w') as log_file: 
-        os.chmod(log_file_name, 0o777)
+    with open(log_file_path,'w') as log_file: 
+        os.chmod(log_file_path, 0o777)
         log_file.write(text_to_insert) 
     log_file.close()
 
 def read_log_file():
-    log_file_name = app_name + ".log"
-    with open(log_file_name,'r') as log_file: 
-        os.chmod(log_file_name, 0o777)
+    with open(log_file_path,'r') as log_file: 
+        os.chmod(log_file_path, 0o777)
         step = log_file.readline()
     log_file.close()
     return step
+
+def find_by_relative_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 def create_temp_dir(name_dir):
     if os.path.exists(name_dir): shutil.rmtree(name_dir)
@@ -78,10 +68,9 @@ def create_temp_dir(name_dir):
 def prepare_filename(file_url, index, file_type):
     first_part_filename = str(file_url).split("/")[-3]
 
-    if file_type == "image":
-        extension = ".png"
-    elif file_type == "video":
-        extension = ".mp4"
+    if file_type == "image":   extension = ".png"
+    elif file_type == "video": extension = ".mp4"
+
     filename = first_part_filename + "_" + str(index) + extension
 
     return filename
@@ -98,103 +87,16 @@ def update_process_status(actual_process_phase):
     print("> " + actual_process_phase)
     write_in_log_file(actual_process_phase) 
 
+def stop_thread(): stop = 1 + "x"
+
+def remove_file(name_file): 
+    if os.path.exists(name_file): os.remove(name_file)
+
+def remove_temp_files(): remove_file(log_file_path)
 
 
-# ---------------------- /Utils ----------------------
 
-# ---------------------- Core ----------------------
-
-def process_start_download(link, cpu_number):
-    dir_name      = link.split("/")[3]
-    target_dir    = dir_name
-
-    update_process_status('Preparing')
-    
-    try:
-        create_temp_dir(target_dir)
-
-        how_many_images = int(get_number_of_images(link))  
-
-        list_of_index = []
-        for index in range(how_many_images): list_of_index.append(index)
-
-        update_process_status("Downloading")
-
-        with ThreadPool(cpu_number) as pool:
-            pool.starmap(thread_download_file, 
-                         zip(itertools.repeat(link),
-                         list_of_index,
-                         itertools.repeat(target_dir)))
-            
-        update_process_status("Completed")
-
-    except Exception as exception:
-        update_process_status('Error while downloading' + '\n\n' + str(exception)) 
-        show_error(exception)
-
-def thread_download_file(link, index, target_dir):
-    link = link + str(index)       
-    model_name = link.split('/')[3]
-    try:
-        file_url, file_type = get_file_url(link)
-        
-        if model_name in file_url:
-            file_name = prepare_filename(file_url, index, file_type)
-
-            if file_type == "image":
-                download_image(file_url, file_name, target_dir)
-                x = 1 + "x"
-            elif file_type == "video":
-                download_video(file_url, file_name, target_dir)
-                x = 1 + "x"
-    except:
-        pass
-
-def download_image(file_url, file_name, target_dir):
-    if file_url != '' and target_dir.split(os.sep)[-1] in file_url:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
-        }
-        
-        request = urllib.request.Request(file_url, headers=headers)
-        
-        with urllib.request.urlopen(request) as response, open(os.path.join(target_dir, file_name), 'wb') as out_file:
-            data = response.read()
-            out_file.write(data)
-
-def download_video(file_url, file_name, target_dir):
-    if file_url != '' and target_dir.split(os.sep)[-1] in file_url:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
-        }
-        
-        request = urllib.request.Request(file_url, headers=headers)
-        
-        with urllib.request.urlopen(request) as response, open(os.path.join(target_dir, file_name), 'wb') as out_file:
-            data = response.read()
-            out_file.write(data)
-
-def thread_check_steps_download( link, how_many_files ):
-    time.sleep(2)
-
-    dir_name      = link.split("/")[3]
-    target_dir    = dir_name
-
-    try:
-        while True:
-            step = read_log_file()
-            if "Completed" in step or "Error" in step or "Stopped" in step:
-                info_message.set(step)
-                stop = 1 + "x"
-            elif "Downloading" in step:
-                count = len(fnmatch.filter(os.listdir(target_dir), '*.*'))
-                info_message.set("Downloading " + str(count) + "/" + str(how_many_files))
-            else:
-                info_message.set(step)
-
-            time.sleep(2)
-    except:
-        place_download_button()
+# Core
 
 def get_file_url(link):
     page = requests.get(link)
@@ -202,34 +104,49 @@ def get_file_url(link):
     file_element = soup.find("div", class_="flex justify-between items-center")
 
     if 'type="video/mp4' in str(file_element):
-        # Video
         file_url = file_element.find("source").get("src")
         file_type = "video"
         print('> video: ' + file_url)
     else:
-        # Photo
         file_url = file_element.find("img").get("src")
         file_type = "image"
         print('> image: ' + file_url)
 
     return file_url, file_type
 
-def get_number_of_images(url):
+def get_number_of_files_to_download(url):
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
 
     for link in soup.find_all('a', href=re.compile(url)):
         link_href = link.get('href').rstrip('/')  # Remove trailing slash if present
         if link_href.split('/')[-1].isnumeric():
-            return link_href.split('/')[-1]
+            return int(link_href.split('/')[-1]) + 1
 
     return None
 
+def count_files_in_directory(target_dir):
+    return len(fnmatch.filter(os.listdir(target_dir), '*.*'))
 
+def thread_check_steps_download(link, how_many_files):
+    time.sleep(2)
+    target_dir = link.split("/")[3]
+    try:
+        while True:
+            step = read_log_file()
+            if "Completed" in step or "Error" in step or "Stopped" in step:
+                info_message.set(step)
+                remove_temp_files()
+                stop_thread()
+            elif "Downloading" in step:
+                file_count = count_files_in_directory(target_dir)
+                info_message.set("Downloading " + str(file_count) + "/" + str(how_many_files))
+            else:
+                info_message.set(step)
 
-# ---------------------- /Core ----------------------
-
-# ---------------------- GUI related ----------------------
+            time.sleep(2)
+    except:
+        place_download_button()
 
 def download_button_command():
     global process_download
@@ -246,9 +163,12 @@ def download_button_command():
     selected_link = str(selected_url.get())
 
     if "https://fapello.com/" in selected_link:
+
+        if not selected_link.endswith("/"): selected_link = selected_link + '/'
+
         info_message.set("Starting download")
 
-        how_much_images = int(get_number_of_images(selected_link))  
+        how_many_images = get_number_of_files_to_download(selected_link)
 
         place_stop_button()
         
@@ -257,30 +177,79 @@ def download_button_command():
         process_download.start()
 
         thread_wait = threading.Thread( target = thread_check_steps_download,
-                                        args   = (selected_link, how_much_images), 
+                                        args   = (selected_link, how_many_images), 
                                         daemon = True)
         thread_wait.start()
 
-    elif selected_link == "Paste link here https://fapello.com/emily-rat---/":
-        info_message.set("Please, insert a valid Fapello link")
     else:
-        info_message.set("Please, insert a valid Fapello link")
+        info_message.set("Insert a valid Fapello.com link")
 
 def stop_button_command():
     global process_download
     process_download.terminate()
-    process_download.kill()
+    process_download.join()
     
     write_in_log_file("Stopped") 
 
-def open_info_cpu():
-    info = """This widget allows you to choose how many cpus to dedicate to the app.
+def process_start_download(link, cpu_number):
+    target_dir    = link.split("/")[3]
+    list_of_index = []
 
-The default value is 4:
-- the app will use 4 cpus
-- the app will download 4 files simultaneously""" 
+    update_process_status('Preparing')
     
-    tk.messagebox.showinfo(title = 'AI model', message = info)
+    try:
+        create_temp_dir(target_dir)
+
+        how_many_images = get_number_of_files_to_download(link)
+
+        for index in range(how_many_images): list_of_index.append(index)
+
+        update_process_status("Downloading")
+
+        with ThreadPool(cpu_number) as pool:
+            pool.starmap(thread_download_file, 
+                         zip(
+                             itertools.repeat(link),
+                             itertools.repeat(target_dir),
+                             list_of_index)
+                             )
+            
+        update_process_status("Completed")
+
+    except Exception as exception:
+        update_process_status('Error while downloading' + '\n\n' + str(exception)) 
+        show_error(exception)
+
+def thread_download_file(link, target_dir, index):
+    link = link + str(index)       
+    model_name = link.split('/')[3]
+    try:
+        file_url, file_type = get_file_url(link)
+        
+        if model_name in file_url:
+            file_name = prepare_filename(file_url, index, file_type)
+
+            download_file(file_url, file_name, target_dir)
+            stop_thread()
+    except:
+        pass
+
+def download_file(file_url, file_name, target_dir):
+    if file_url != '' and target_dir.split(os.sep)[-1] in file_url:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+        }
+        
+        request = urllib.request.Request(file_url, headers=headers)
+        
+        with urllib.request.urlopen(request) as response, open(os.path.join(target_dir, file_name), 'wb') as out_file:
+            data = response.read()
+            out_file.write(data)
+
+
+
+
+#  GUI related 
 
 def place_github_button():
     git_button = CTkButton(master      = window, 
@@ -291,10 +260,11 @@ def place_github_button():
                             font       = bold11,
                             image      = logo_git,
                             command    = opengithub)
-    git_button.place(relx = 0.835, rely = 0.1, anchor = tk.CENTER)
+    
+    git_button.place(relx = 0.055, rely = 0.875, anchor = tk.CENTER)
 
 def place_telegram_button():
-    telegram_button = CTkButton(master = window, 
+    telegram_button = CTkButton(master     = window, 
                                 width      = 30,
                                 height     = 30,
                                 fg_color   = "black",
@@ -302,7 +272,14 @@ def place_telegram_button():
                                 font       = bold11,
                                 image      = logo_telegram,
                                 command    = opentelegram)
-    telegram_button.place(relx = 0.92, rely = 0.1, anchor = tk.CENTER)
+    telegram_button.place(relx = 0.055, rely = 0.95, anchor = tk.CENTER)
+ 
+def open_info_simultaneous_downloads():
+    info = """This widget allows you to choose how many files you can download simultaneously with the app.
+
+• The default value is 4"""
+    
+    tk.messagebox.showinfo(title = 'AI model', message = info)
 
 def place_app_name():
     app_name_label = CTkLabel(master     = window, 
@@ -333,13 +310,13 @@ def place_cpu_textbox():
                             master  = window, 
                             fg_color   = "black",
                             text_color = "#89CFF0",
-                            text     = "Cpu number",
+                            text     = "Simultaneous downloads",
                             height   = 27,
                             width    = 140,
                             font     = bold11,
                             corner_radius = 25,
                             anchor  = "center",
-                            command = open_info_cpu
+                            command = open_info_simultaneous_downloads
                             )
 
     cpu_textbox = CTkEntry(master      = window, 
@@ -350,7 +327,7 @@ def place_cpu_textbox():
                             textvariable = selected_cpu_number, 
                             justify     = "center")
     
-    cpu_button.place(relx = 0.45, rely = 0.42, anchor = tk.CENTER)
+    cpu_button.place(relx = 0.42, rely = 0.42, anchor = tk.CENTER)
     cpu_textbox.place(relx = 0.75, rely = 0.42, anchor = tk.CENTER)
 
 def place_message_label():
@@ -390,10 +367,6 @@ def place_stop_button():
 
 
 
-# ---------------------- /GUI related ----------------------
-
-# ---------------------- /Functions ----------------------
-
 class App:
     def __init__(self, window):
         window.title('')
@@ -428,6 +401,7 @@ if __name__ == "__main__":
     info_message.set("Hi :)")
 
 
+
     bold8  = CTkFont(family = "Segoe UI", size = 8, weight = "bold")
     bold9  = CTkFont(family = "Segoe UI", size = 9, weight = "bold")
     bold10 = CTkFont(family = "Segoe UI", size = 10, weight = "bold")
@@ -439,10 +413,9 @@ if __name__ == "__main__":
     bold21 = CTkFont(family = "Segoe UI", size = 21, weight = "bold")
 
     download_icon   = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "download_icon.png")), size=(15, 15))
-    stop_icon   = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "stop_icon.png")), size=(15, 15))
-    logo_git   = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "github_logo.png")), size=(15, 15))
-    logo_itch  = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "itch_logo.png")),  size=(13, 13))
-    logo_telegram = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "telegram_logo.png")),  size=(15, 15))
+    stop_icon       = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "stop_icon.png")), size=(15, 15))
+    logo_git        = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "github_logo.png")), size=(15, 15))
+    logo_telegram   = CTkImage(Image.open(find_by_relative_path("Assets" + os.sep + "telegram_logo.png")),  size=(15, 15))
     
     app = App(window)
     window.update()
