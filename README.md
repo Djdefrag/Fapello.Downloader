@@ -12,7 +12,7 @@
 <br>
 
 <div align="center">
-    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/e0c266b5-d3ea-4457-9b6a-af6d73db9889"> </a> 
+    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/b2c6c20d-d9c1-475f-9fb5-834d618fefe3"> </a> 
 </div>
 
 ## Other projects.🤓
