@@ -166,7 +166,7 @@ def create_info_button(command, text):
                     image         = info_icon)
 
 def create_text_box(textvariable, width, heigth):
-    return CTkEntry(master        = window, 
+    entry = CTkEntry(master        = window, 
                     textvariable  = textvariable,
                     border_width  = 1,
                     width         = width,
@@ -175,8 +175,17 @@ def create_text_box(textvariable, width, heigth):
                     justify       = "center",
                     fg_color      = "#000000",
                     border_color  = "#404040")
+    entry.bind("<Control-v>", lambda event: paste_override(event, entry))
+    return entry
 
-
+def paste_override(event, entry):
+    try:
+        text = window.clipboard_get()
+        entry.delete("sel.first", "sel.last")
+    except:
+        pass
+    entry.insert("insert", text)
+    return "break"
 
 # Utils 
 
@@ -564,7 +573,16 @@ class App:
         place_simultaneous_downloads_textbox()
         place_message_label()             
         place_download_button()
+        window.bind("<Control-a>", self.select_all)
 
+    def select_all(self, event):
+        try:
+            widget = window.focus_get()
+            widget.select_range(0, "end")
+            widget.icursor("end")
+        except:
+            pass
+        
 if __name__ == "__main__":    
     freeze_support()
 
