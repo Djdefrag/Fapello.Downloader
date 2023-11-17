@@ -59,7 +59,7 @@ from customtkinter import (
 warnings_filterwarnings("ignore")
 
 app_name = "Fapello.Downloader"
-version  = "3.2"
+version  = "3.3"
 
 text_color      = "#F0F0F0"
 app_name_color  = "#ffbf00"
@@ -69,112 +69,6 @@ telegramme      = "https://linktr.ee/j3ngystudio"
 qs_link         = "https://jangystudio.itch.io/qualityscaler"
 
 log_file_path  = f"{app_name}.log"
-
-
-# GUI
-
-class CTkMessageBox(CTkToplevel):
-    def __init__(self,
-                 title: str = "CTkDialog",
-                 text: str = "CTkDialog",
-                 type: str = "info"):
-
-        super().__init__()
-
-        self._running: bool = False
-        self._title = title
-        self._text = text
-        self.type = type
-
-        self.title('')
-        self.lift()                          # lift window on top
-        self.attributes("-topmost", True)    # stay on top
-        self.protocol("WM_DELETE_WINDOW", self._on_closing)
-        self.after(10, self._create_widgets)  # create widgets with slight delay, to avoid white flickering of background
-        self.resizable(False, False)
-        self.grab_set()                       # make other windows not clickable
-
-    def _create_widgets(self):
-
-        self.grid_columnconfigure((0, 1), weight=1)
-        self.rowconfigure(0, weight=1)
-
-        self._text = '\n' + self._text +'\n'
-
-        if self.type == "info":
-            color_for_messagebox_title = "#0096FF"
-        elif self.type == "error":
-            color_for_messagebox_title = "#ff1a1a"
-
-
-        self._titleLabel = CTkLabel(master  = self,
-                                    width      = 500,
-                                    anchor     = 'w',
-                                    justify    = "left",
-                                    fg_color   = "transparent",
-                                    text_color = color_for_messagebox_title,
-                                    font       = bold24,
-                                    text       = self._title)
-        
-        self._titleLabel.grid(row=0, column=0, columnspan=2, padx=30, pady=20, sticky="ew")
-
-        self._label = CTkLabel(master = self,
-                                width      = 550,
-                                wraplength = 550,
-                                corner_radius = 10,
-                                anchor     = 'w',
-                                justify    = "left",
-                                text_color = "#C0C0C0",
-                                bg_color   = "transparent",
-                                fg_color   = "#303030",
-                                font       = bold12,
-                                text       = self._text)
-        
-        self._label.grid(row=1, column=0, columnspan=2, padx=30, pady=5, sticky="ew")
-
-        self._ok_button = CTkButton(master  = self,
-                                    command = self._ok_event,
-                                    text    = 'OK',
-                                    width   = 125,
-                                    font         = bold11,
-                                    border_width = 1,
-                                    fg_color     = "#282828",
-                                    text_color   = "#E0E0E0",
-                                    border_color = "#0096FF")
-        
-        self._ok_button.grid(row=2, column=1, columnspan=1, padx=(10, 20), pady=(10, 20), sticky="e")
-
-    def _ok_event(self, event = None):
-        self.grab_release()
-        self.destroy()
-
-    def _on_closing(self):
-        self.grab_release()
-        self.destroy()
-
-def create_info_button(command, text):
-    return CTkButton(master  = window, 
-                    command  = command,
-                    text          = text,
-                    fg_color      = "transparent",
-                    text_color    = "#C0C0C0",
-                    anchor        = "w",
-                    height        = 23,
-                    width         = 150,
-                    corner_radius = 12,
-                    font          = bold12,
-                    image         = info_icon)
-
-def create_text_box(textvariable, width, heigth):
-    return CTkEntry(master        = window, 
-                    textvariable  = textvariable,
-                    border_width  = 1,
-                    width         = width,
-                    height        = heigth,
-                    font          = bold10,
-                    justify       = "center",
-                    fg_color      = "#000000",
-                    border_color  = "#404040")
 
 
 
@@ -229,7 +123,7 @@ def stop_thread():
 def prepare_filename(file_url, index, file_type):
     first_part_filename = str(file_url).split("/")[-3]
 
-    if   file_type == "image": extension = ".png"
+    if   file_type == "image": extension = ".jpg"
     elif file_type == "video": extension = ".mp4"
 
     filename = first_part_filename + "_" + str(index) + extension
@@ -298,28 +192,31 @@ def download_button_command():
         info_message.set("Cpu number must be a numeric value")
         return
 
-
     selected_link = str(selected_url.get()).strip()
 
     if "https://fapello.com" in selected_link:
 
         download_type = 'fapello.com'
 
-        if not selected_link.endswith("/"): 
-            selected_link = selected_link + '/'
+        if not selected_link.endswith("/"): selected_link = selected_link + '/'
 
         how_many_images = get_Fapello_files_number(selected_link)
-        
-        process_download = Process(target = process_start_download,
-                                   args   = (selected_link, cpu_number))
-        process_download.start()
 
-        thread_wait = Thread(target = thread_check_steps_download,
-                            args   = (selected_link, how_many_images), 
-                            daemon = True)
-        thread_wait.start()
+        if how_many_images == 0:
+            info_message.set("No files found for this link")
+        else: 
+            process_download = Process(
+                                    target = process_start_download,
+                                    args   = (selected_link, cpu_number)
+                                    )
+            process_download.start()
 
-        place_stop_button()
+            thread_wait = Thread(target = thread_check_steps_download,
+                                args   = (selected_link, how_many_images), 
+                                daemon = True)
+            thread_wait.start()
+
+            place_stop_button()
 
     else:
         info_message.set("Insert a valid Fapello.com link")
@@ -332,10 +229,11 @@ def stop_button_command():
     write_in_log_file("Stopped") 
 
 def get_Fapello_file_url(link):
-    page = requests_get(link)
+    headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36" }
+    page = requests_get(link, headers = headers)
+
     soup = BeautifulSoup(page.content, "html.parser")
     file_element = soup.find("div", class_="flex justify-between items-center")
-
     try: 
         if 'type="video/mp4' in str(file_element):
             file_url  = file_element.find("source").get("src")
@@ -351,15 +249,20 @@ def get_Fapello_file_url(link):
         return None, None
 
 def get_Fapello_files_number(url):
-    page = requests_get(url)
-    soup = BeautifulSoup(page.content, "html.parser")
+    headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36" }
+    page    = requests_get(url, headers = headers)
+    soup    = BeautifulSoup(page.content, "html.parser")
 
-    for link in soup.find_all('a', href = re_compile(url)):
-        link_href = link.get('href').rstrip('/')  # Remove trailing slash if present
-        if link_href.split('/')[-1].isnumeric():
-            return int(link_href.split('/')[-1]) + 1
+    all_href_links = soup.find_all('a', href = re_compile(url))
 
-    return None
+    for link in all_href_links:
+        link_href          = link.get('href')
+        link_href_stripped = link_href.rstrip('/')
+        link_href_numeric  = link_href_stripped.split('/')[-1]
+        if link_href_numeric.isnumeric():
+            return int(link_href_numeric) + 1
+
+    return 0
 
 def thread_download_file(link, target_dir, index):
     headers    = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36" }
@@ -369,18 +272,16 @@ def thread_download_file(link, target_dir, index):
     file_url, file_type = get_Fapello_file_url(link)
 
     if file_url != None:
-        try:        
-            file_name = prepare_filename(file_url, index, file_type)
-            request   = Request(file_url, headers=headers)
-            
-            with urlopen(request) as response:
-                with open(os_path_join(target_dir, file_name), 'wb') as output_file:
-                    output_file.write(response.read())
-
-            stop_thread()
-        except:
-            pass
-
+        if model_name in file_url:
+            try:        
+                file_name = prepare_filename(file_url, index, file_type)
+                request   = Request(file_url, headers=headers)
+                response  = urlopen(request)
+                output_file = open(os_path_join(target_dir, file_name), 'wb')
+                output_file.write(response.read())
+            except:
+                pass
+                
 def process_start_download(link, cpu_number):
     target_dir    = link.split("/")[3]
     list_of_index = []
@@ -389,21 +290,20 @@ def process_start_download(link, cpu_number):
     
     try:
         create_temp_dir(target_dir)
-        how_many_images = get_Fapello_files_number(link)
-        list_of_index   = [index for index in range(how_many_images)]
+        how_many_files = get_Fapello_files_number(link)
+        list_of_index  = [index for index in range(how_many_files)]
+        print('> Found ' + str(how_many_files) + ' files')
 
         with ThreadPool(cpu_number) as pool:
-            pool.starmap(thread_download_file, 
-                            zip(
-                                itertools_repeat(link),
-                                itertools_repeat(target_dir),
-                                list_of_index)
-                                )
+            pool.starmap(
+                thread_download_file,
+                zip(itertools_repeat(link), itertools_repeat(target_dir), list_of_index) 
+            )
             
         update_process_status("Completed")
 
-    except Exception as exception:
-        update_process_status('Error while downloading' + '\n\n' + str(exception)) 
+    except Exception as error:
+        update_process_status('Error while downloading' + '\n\n' + str(error)) 
 
 
 
@@ -527,7 +427,7 @@ def place_stop_button():
 
 
 
-# Main functions ---------------------------
+# Main/GUI functions ---------------------------
 
 def on_app_close():
     window.grab_release()
@@ -544,6 +444,111 @@ def on_app_close():
 
     remove_temp_files()
 
+# GUI
+
+class CTkMessageBox(CTkToplevel):
+    def __init__(self,
+                 title: str = "CTkDialog",
+                 text: str = "CTkDialog",
+                 type: str = "info"):
+
+        super().__init__()
+
+        self._running: bool = False
+        self._title = title
+        self._text = text
+        self.type = type
+
+        self.title('')
+        self.lift()                          # lift window on top
+        self.attributes("-topmost", True)    # stay on top
+        self.protocol("WM_DELETE_WINDOW", self._on_closing)
+        self.after(10, self._create_widgets)  # create widgets with slight delay, to avoid white flickering of background
+        self.resizable(False, False)
+        self.grab_set()                       # make other windows not clickable
+
+    def _create_widgets(self):
+
+        self.grid_columnconfigure((0, 1), weight=1)
+        self.rowconfigure(0, weight=1)
+
+        self._text = '\n' + self._text +'\n'
+
+        if self.type == "info":
+            color_for_messagebox_title = "#0096FF"
+        elif self.type == "error":
+            color_for_messagebox_title = "#ff1a1a"
+
+
+        self._titleLabel = CTkLabel(master  = self,
+                                    width      = 500,
+                                    anchor     = 'w',
+                                    justify    = "left",
+                                    fg_color   = "transparent",
+                                    text_color = color_for_messagebox_title,
+                                    font       = bold24,
+                                    text       = self._title)
+        
+        self._titleLabel.grid(row=0, column=0, columnspan=2, padx=30, pady=20, sticky="ew")
+
+        self._label = CTkLabel(master = self,
+                                width      = 550,
+                                wraplength = 550,
+                                corner_radius = 10,
+                                anchor     = 'w',
+                                justify    = "left",
+                                text_color = "#C0C0C0",
+                                bg_color   = "transparent",
+                                fg_color   = "#303030",
+                                font       = bold12,
+                                text       = self._text)
+        
+        self._label.grid(row=1, column=0, columnspan=2, padx=30, pady=5, sticky="ew")
+
+        self._ok_button = CTkButton(master  = self,
+                                    command = self._ok_event,
+                                    text    = 'OK',
+                                    width   = 125,
+                                    font         = bold11,
+                                    border_width = 1,
+                                    fg_color     = "#282828",
+                                    text_color   = "#E0E0E0",
+                                    border_color = "#0096FF")
+        
+        self._ok_button.grid(row=2, column=1, columnspan=1, padx=(10, 20), pady=(10, 20), sticky="e")
+
+    def _ok_event(self, event = None):
+        self.grab_release()
+        self.destroy()
+
+    def _on_closing(self):
+        self.grab_release()
+        self.destroy()
+
+def create_info_button(command, text):
+    return CTkButton(master  = window, 
+                    command  = command,
+                    text          = text,
+                    fg_color      = "transparent",
+                    text_color    = "#C0C0C0",
+                    anchor        = "w",
+                    height        = 23,
+                    width         = 150,
+                    corner_radius = 12,
+                    font          = bold12,
+                    image         = info_icon)
+
+def create_text_box(textvariable, width, heigth):
+    return CTkEntry(master        = window, 
+                     textvariable  = textvariable,
+                     border_width  = 1,
+                     width         = width,
+                     height        = heigth,
+                     font          = bold10,
+                     justify       = "center",
+                     fg_color      = "#000000",
+                     border_color  = "#404040")
+    
 class App:
     def __init__(self, window):
         window.title('')
@@ -554,7 +559,6 @@ class App:
         window.iconbitmap(find_by_relative_path("Assets" + os_separator + "logo.ico"))
 
         window.protocol("WM_DELETE_WINDOW", on_app_close)
-
 
         place_app_name()
         place_qualityscaler_button()
