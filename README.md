@@ -8,18 +8,16 @@
         </button>     
     </a>
 </div>
-
 <br>
-
 <div align="center">
-    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/b2c6c20d-d9c1-475f-9fb5-834d618fefe3"> </a> 
+    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/7c037746-48b9-482b-bdc8-9bec53935562"> </a> 
 </div>
 
 ## Other projects.🤓
 
-- https://github.com/Djdefrag/QualityScaler / QualityScaler - image/video AI upscaler app
-- https://github.com/Djdefrag/RealESRScaler / RealScaler -  image/video AI upscaler app (Real-ESRGAN)
-- https://github.com/Djdefrag/FluidFrames.RIFE / FluidFrames.RIFE - video AI interpolation app (RIFE-HDv3)
+- https://github.com/Djdefrag/QualityScaler / QualityScaler - image/video AI upscaler
+- https://github.com/Djdefrag/RealScaler / RealScaler -  image/video AI upscaler app (Real-ESRGAN)
+- https://github.com/Djdefrag/FluidFrames.RIFE / FluidFrames.RIFE - video AI frame generation
 
 
 ## How is made. 🛠
@@ -27,7 +25,7 @@
 Fapello.Downloader is completely written in Python, from backend to frontend. External packages are:
 - [ ] Core -> beautifulsoup / requests
 - [ ] GUI -> customtkinter
-- [ ] Packaging   -> pyinstaller
+- [ ] Packaging -> nuitka
 
 ## How to use. 👨‍💻
 * Copy the Fapello link of interest (for example: https://fapello.com/mia-kha***/)
