@@ -5,10 +5,9 @@ Pillow
 
 # GUI
 customtkinter
-packaging
 
 # UTILS
-pyinstaller==5.13.2
+nuitka
 
 
 
