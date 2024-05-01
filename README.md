@@ -10,7 +10,7 @@
 </div>
 <br>
 <div align="center">
-    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/7c037746-48b9-482b-bdc8-9bec53935562"> </a> 
+    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/bfab78d4-65e2-4833-b78a-da9195bec7c2"> </a> 
 </div>
 
 ## Other projects.🤓
@@ -37,5 +37,5 @@ Fapello.Downloader is completely written in Python, from backend to frontend. Ex
 ## Next steps. 🤫
 - [ ] Update libraries 
     - [x] Python 3.10 (expecting ~10% more performance) 
-    - [ ] Python 3.11 (expecting ~30% more performance)
+    - [x] Python 3.11 (expecting ~30% more performance)
 
