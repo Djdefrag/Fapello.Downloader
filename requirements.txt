@@ -6,8 +6,6 @@ Pillow
 # GUI
 customtkinter
 
-# UTILS
-nuitka
 
 
 

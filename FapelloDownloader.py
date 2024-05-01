@@ -2,17 +2,17 @@
 
 # Standard library imports
 import sys
-from time import sleep
+from time       import sleep
 from webbrowser import open as open_browser
-from warnings import filterwarnings
+from warnings   import filterwarnings
 
 from multiprocessing import ( 
     Process, 
     Queue          as multiprocessing_Queue,
     freeze_support as multiprocessing_freeze_support
 )
-
-from shutil import rmtree
+from typing    import Callable
+from shutil    import rmtree
 from itertools import repeat as itertools_repeat
 from threading import Thread
 from multiprocessing.pool import ThreadPool
@@ -32,12 +32,13 @@ from os.path import (
 
 
 # Third-party library imports
-from bs4 import BeautifulSoup
-from requests import get as requests_get
+from re             import compile as re_compile
+from requests       import get as requests_get
+from fnmatch        import filter as fnmatch_filter
+from PIL.Image      import open as pillow_image_open
+from bs4            import BeautifulSoup
 from urllib.request import Request, urlopen
-from re import compile as re_compile
-from fnmatch import filter as fnmatch_filter
-from PIL.Image import open as pillow_image_open
+
 
 
 # GUI imports
@@ -57,7 +58,7 @@ from customtkinter import (
 filterwarnings("ignore")
 
 app_name = "Fapello.Downloader"
-version  = "3.4"
+version  = "3.5"
 
 text_color      = "#F0F0F0"
 app_name_color  = "#ffbf00"
@@ -66,10 +67,10 @@ githubme        = "https://github.com/Djdefrag/Fapello.Downloader"
 telegramme      = "https://linktr.ee/j3ngystudio"
 qs_link         = "https://github.com/Djdefrag/QualityScaler"
 
-COMPLETED_STATUS = "Completed"
+COMPLETED_STATUS   = "Completed"
 DOWNLOADING_STATUS = "Downloading"
-ERROR_STATUS = "Error"
-STOP_STATUS = "Stop"
+ERROR_STATUS       = "Error"
+STOP_STATUS        = "Stop"
 
 headers_for_request = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.3" }
 
@@ -122,11 +123,11 @@ def show_error_message(
     messageBox_text  = f" {str(exception)} "
 
     CTkMessageBox(
-        messageType = "error", 
-        title = messageBox_title, 
-        subtitle = messageBox_subtitle,
+        messageType   = "error", 
+        title         = messageBox_title, 
+        subtitle      = messageBox_subtitle,
         default_value = None,
-        option_list = [messageBox_text]
+        option_list   = [messageBox_text]
     )
 
 def read_process_status() -> None:
@@ -320,10 +321,7 @@ def thread_download_file(
         try:        
             file_name = prepare_filename(file_url, index, file_type)
 
-            request = Request(
-                file_url, 
-                headers = headers
-                )
+            request = Request(file_url, headers = headers)
             response = urlopen(request)
 
             file_path = os_path_join(target_dir, file_name)
@@ -351,15 +349,18 @@ def download_orchestrator(
         with ThreadPool(cpu_number) as pool:
             pool.starmap(
                 thread_download_file,
-                zip(itertools_repeat(selected_link), 
+                zip(
+                    itertools_repeat(selected_link), 
                     itertools_repeat(target_dir), 
-                    list_of_index) 
+                    list_of_index
+                ) 
             )
             
         write_process_status(processing_queue, COMPLETED_STATUS)
 
     except Exception as error:
-        write_process_status(processing_queue, f"{ERROR_STATUS}{error}") 
+        print(error) 
+        pass
 
 
 
@@ -422,20 +423,21 @@ def open_info_simultaneous_downloads():
         option_list = []
     )
 
-def open_info_DNS_tips():
+def open_info_tips():
     CTkMessageBox(
-        messageType = 'info',
-        title = "DNS tips",
-        subtitle = "In case of problems with reaching the website, follow these tips",
+        messageType   = 'info',
+        title         = "Tips",
+        subtitle      = "In case of problems with reaching the website, follow these tips",
         default_value = None,
-        option_list = [
+        option_list   = [
             " Many internet providers block access to websites such as fapello.com",
             " In this case you can use custom DNS to solve the problem, by setting them in Windows",
             " The most popular DNS are Cloudflare 1.1.1.1 or Google 8.8.8.8",
 
-            "\n Alternatively, there is a free program called DNSJumper\n" +
-            "   it can find the best custom DNS for your internet line and set them directly\n" + 
-            "   it can quickly revert to the default DNS in case of problems \n"
+            "\n To facilitate there is a free program called DNSJumper\n" +
+            "    • it can find the best custom DNS for your internet line and set them directly\n" + 
+            "    • it can quickly revert to the default DNS in case of problems \n" + 
+            "    • has also a useful function called DNS Flush that solves problems connecting to the Fapello.com \n"
         ]
     )
 
@@ -461,8 +463,8 @@ def place_simultaneous_downloads_textbox():
     cpu_button.place(relx = 0.42, rely = 0.42, anchor = CENTER)
     cpu_textbox.place(relx = 0.75, rely = 0.42, anchor = CENTER)
 
-def place_DNS_tips():
-    dns_tips_button = create_info_button(open_info_DNS_tips, "DNS tips", width = 110)
+def place_tips():
+    dns_tips_button = create_info_button(open_info_tips, "Tips", width = 110)
     dns_tips_button.place(relx = 0.8, rely = 0.9, anchor = CENTER)
 
 def place_message_label():
@@ -687,17 +689,23 @@ class CTkMessageBox(CTkToplevel):
         self.placeInfoMessageOptionsText()
         self.placeInfoMessageOkButton()
 
-def create_info_button(command, text, width = 160):
+def create_info_button(
+        command: Callable, 
+        text: str,
+        width: int = 150
+        ) -> CTkButton:
+    
     return CTkButton(
-        master   = window, 
-        command  = command,
+        master  = window, 
+        command = command,
         text          = text,
         fg_color      = "transparent",
+        hover_color   = "#181818",
         text_color    = "#C0C0C0",
-        anchor        = "center",
-        height        = 24,
+        anchor        = "w",
+        height        = 22,
         width         = width,
-        corner_radius = 12,
+        corner_radius = 10,
         font          = bold12,
         image         = info_icon
     )
@@ -724,6 +732,7 @@ class App:
         height       = 500
         window.geometry("500x500")
         window.minsize(width, height)
+        window.resizable(False, False)
         window.iconbitmap(find_by_relative_path("Assets" + os_separator + "logo.ico"))
 
         window.protocol("WM_DELETE_WINDOW", on_app_close)
@@ -734,7 +743,7 @@ class App:
         place_telegram_button()
         place_link_textbox()
         place_simultaneous_downloads_textbox()
-        place_DNS_tips()
+        place_tips()
         place_message_label()             
         place_download_button()
 
