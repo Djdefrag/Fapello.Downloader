@@ -12,7 +12,7 @@ from multiprocessing import (
     freeze_support as multiprocessing_freeze_support
 )
 from typing    import Callable
-from shutil    import rmtree
+from shutil    import rmtree as remove_directory
 from itertools import repeat as itertools_repeat
 from threading import Thread
 from multiprocessing.pool import ThreadPool
@@ -58,7 +58,7 @@ from customtkinter import (
 filterwarnings("ignore")
 
 app_name = "Fapello.Downloader"
-version  = "3.5"
+version  = "3.6"
 
 text_color      = "#F0F0F0"
 app_name_color  = "#ffbf00"
@@ -72,39 +72,28 @@ DOWNLOADING_STATUS = "Downloading"
 ERROR_STATUS       = "Error"
 STOP_STATUS        = "Stop"
 
-headers_for_request = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.3" }
+HEADERS_FOR_REQUESTS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36" }
 
 # Utils 
 
-def opengithub() -> None:   
-    open_browser(githubme, new=1)
+def opengithub() -> None: open_browser(githubme, new=1)
 
-def opentelegram() -> None: 
-    open_browser(telegramme, new=1)
+def opentelegram() -> None: open_browser(telegramme, new=1)
 
-def openqualityscaler() -> None:
-    open_browser(qs_link, new=1)
+def openqualityscaler() -> None: open_browser(qs_link, new=1)
 
-def find_by_relative_path(
-        relative_path: str
-        ) -> str:
-    
+def find_by_relative_path(relative_path: str) -> str:
     base_path = getattr(sys, '_MEIPASS', os_path_dirname(os_path_abspath(__file__)))
     return os_path_join(base_path, relative_path)
 
-def create_temp_dir(
-        name_dir: str
-        ) -> None:
-    
-    if os_path_exists(name_dir): 
-        rmtree(name_dir)
-    if not os_path_exists(name_dir): 
-        os_makedirs(name_dir, mode=0o777)
+def create_temp_dir(name_dir: str) -> None:
+    if os_path_exists(name_dir): remove_directory(name_dir)
+    if not os_path_exists(name_dir): os_makedirs(name_dir, mode=0o777)
 
-def stop_thread(): 
+def stop_thread() -> None: 
     stop = 1 + "x"
 
-def prepare_filename(file_url, index, file_type):
+def prepare_filename(file_url, index, file_type) -> str:
     first_part_filename = str(file_url).split("/")[-3]
 
     if   file_type == "image": extension = ".jpg"
@@ -114,13 +103,11 @@ def prepare_filename(file_url, index, file_type):
 
     return filename
 
-def show_error_message(
-        exception: str
-        ) -> None:
-    
-    messageBox_title = "Download error"
+def show_error_message(exception: str) -> None:
+  
+    messageBox_title    = "Download error"
     messageBox_subtitle = "Please report the error on Github or Telegram"
-    messageBox_text  = f" {str(exception)} "
+    messageBox_text     = f" {str(exception)} "
 
     CTkMessageBox(
         messageType   = "error", 
@@ -146,15 +133,13 @@ def write_process_status(
     while not processing_queue.empty(): processing_queue.get()
     processing_queue.put(f"{step}")
 
-def count_files_in_directory(
-        target_dir: str
-        ) -> int:
-    
+def count_files_in_directory(target_dir: str) -> int:
     return len(fnmatch_filter(os_listdir(target_dir), '*.*'))
 
 def thread_check_steps_download(
         link: str, 
-        how_many_files: int) -> None:
+        how_many_files: int
+        ) -> None:
     
     sleep(1)
     target_dir = link.split("/")[3]
@@ -193,6 +178,27 @@ def thread_check_steps_download(
 
 
 # Core
+
+def check_button_command() -> None:
+
+    selected_link = str(selected_url.get()).strip()
+
+    if selected_link == "Paste link here https://fapello.com/emily-rat---/": info_message.set("Insert a valid Fapello.com link")
+
+    elif selected_link == "": info_message.set("Insert a valid Fapello.com link")
+
+    elif "https://fapello.com" in selected_link:
+
+        if not selected_link.endswith("/"): selected_link = selected_link + '/'
+
+        how_many_files = get_Fapello_files_number(selected_link)
+
+        if how_many_files == 0:
+            info_message.set("No files found for this link")
+        else: 
+            info_message.set(f"Found {how_many_files} files for this link")
+
+    else: info_message.set("Insert a valid Fapello.com link")
 
 def download_button_command() -> None:
     global process_download
@@ -263,13 +269,9 @@ def stop_button_command() -> None:
     stop_download_process()
     write_process_status(processing_queue, f"{STOP_STATUS}") 
 
-def get_Fapello_file_url(
-        link: str
-        ) -> tuple:
+def get_Fapello_file_url(link: str) -> tuple:
     
-    headers = headers_for_request
-    page    = requests_get(link, headers = headers)
-
+    page = requests_get(link, headers = HEADERS_FOR_REQUESTS)
     soup = BeautifulSoup(page.content, "html.parser")
     file_element = soup.find("div", class_="flex justify-between items-center")
     try: 
@@ -286,13 +288,10 @@ def get_Fapello_file_url(
     except:
         return None, None
 
-def get_Fapello_files_number(
-        url: str
-        ) -> int:
+def get_Fapello_files_number(url: str) -> int:
     
-    headers = headers_for_request
-    page    = requests_get(url, headers = headers)
-    soup    = BeautifulSoup(page.content, "html.parser")
+    page = requests_get(url, headers = HEADERS_FOR_REQUESTS)
+    soup = BeautifulSoup(page.content, "html.parser")
 
     all_href_links = soup.find_all('a', href = re_compile(url))
 
@@ -309,9 +308,9 @@ def get_Fapello_files_number(
 def thread_download_file(
         link: str, 
         target_dir: str, 
-        index: int) -> None:
+        index: int
+        ) -> None:
     
-    headers    = headers_for_request
     link       = link + str(index)       
     model_name = link.split('/')[3]
 
@@ -320,13 +319,12 @@ def thread_download_file(
     if file_url != None and model_name in file_url:
         try:        
             file_name = prepare_filename(file_url, index, file_type)
+            file_path = os_path_join(target_dir, file_name)
 
-            request = Request(file_url, headers = headers)
+            request  = Request(file_url, headers = HEADERS_FOR_REQUESTS)
             response = urlopen(request)
 
-            file_path = os_path_join(target_dir, file_name)
-            with open(file_path, 'wb') as output_file:
-                output_file.write(response.read())
+            with open(file_path, 'wb') as output_file: output_file.write(response.read())
 
         except:
             pass
@@ -334,7 +332,8 @@ def thread_download_file(
 def download_orchestrator(
         processing_queue: multiprocessing_Queue,
         selected_link: str, 
-        cpu_number: int):
+        cpu_number: int
+        ):
     
     target_dir    = selected_link.split("/")[3]
     list_of_index = []
@@ -364,7 +363,7 @@ def download_orchestrator(
 
 
 
-#  GUI related 
+#  UI function 
 
 def place_github_button():
     git_button = CTkButton(master      = window, 
@@ -426,18 +425,19 @@ def open_info_simultaneous_downloads():
 def open_info_tips():
     CTkMessageBox(
         messageType   = 'info',
-        title         = "Tips",
+        title         = "Connection tips",
         subtitle      = "In case of problems with reaching the website, follow these tips",
         default_value = None,
         option_list   = [
             " Many internet providers block access to websites such as fapello.com",
-            " In this case you can use custom DNS to solve the problem, by setting them in Windows",
-            " The most popular DNS are Cloudflare 1.1.1.1 or Google 8.8.8.8",
+            " In this case you can use custom DNS or use a VPN",
 
             "\n To facilitate there is a free program called DNSJumper\n" +
             "    • it can find the best custom DNS for your internet line and set them directly\n" + 
             "    • it can quickly revert to the default DNS in case of problems \n" + 
-            "    • has also a useful function called DNS Flush that solves problems connecting to the Fapello.com \n"
+            "    • has also a useful function called DNS Flush that solves problems connecting to the Fapello.com \n",
+
+            " On some occasions, the download may freeze, just stop and restart the download"
         ]
     )
 
@@ -454,18 +454,33 @@ def place_app_name():
 
 def place_link_textbox():
     link_textbox = create_text_box(selected_url, 150, 32)
-    link_textbox.place(relx = 0.5, rely = 0.3, relwidth = 0.85, anchor = CENTER)
+    link_textbox.place(relx = 0.435, rely = 0.3, relwidth = 0.7, anchor = CENTER)
+
+def place_check_button():
+    check_button = CTkButton(
+        master     = window, 
+        command    = check_button_command,
+        text       = "CHECK",
+        width      = 60,
+        height     = 30,
+        font       = bold11,
+        border_width = 1,
+        fg_color     = "#282828",
+        text_color   = "#E0E0E0",
+        border_color = "#0096FF"
+    )
+    check_button.place(relx = 0.865, rely = 0.3, anchor = CENTER)
 
 def place_simultaneous_downloads_textbox():
-    cpu_button = create_info_button(open_info_simultaneous_downloads, "Simultaneous downloads")
+    cpu_button  = create_info_button(open_info_simultaneous_downloads, "Simultaneous downloads")
     cpu_textbox = create_text_box(selected_cpu_number, 110, 32)
 
     cpu_button.place(relx = 0.42, rely = 0.42, anchor = CENTER)
     cpu_textbox.place(relx = 0.75, rely = 0.42, anchor = CENTER)
 
 def place_tips():
-    dns_tips_button = create_info_button(open_info_tips, "Tips", width = 110)
-    dns_tips_button.place(relx = 0.8, rely = 0.9, anchor = CENTER)
+    tips_button = create_info_button(open_info_tips, "Connection tips", width = 110)
+    tips_button.place(relx = 0.8, rely = 0.9, anchor = CENTER)
 
 def place_message_label():
     message_label = CTkLabel(
@@ -492,7 +507,8 @@ def place_download_button():
         border_width = 1,
         fg_color     = "#282828",
         text_color   = "#E0E0E0",
-        border_color = "#0096FF")
+        border_color = "#0096FF"
+    )
     download_button.place(relx = 0.5, rely = 0.9, anchor = CENTER)
     
 def place_stop_button(): 
@@ -742,6 +758,7 @@ class App:
         place_github_button()
         place_telegram_button()
         place_link_textbox()
+        place_check_button()
         place_simultaneous_downloads_textbox()
         place_tips()
         place_message_label()             

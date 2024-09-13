@@ -1,3 +1,7 @@
+Fapello.Downloader LICENSE
+
+13/09/2024
+
 Disclaimer of Liability
 
 Please read this disclaimer carefully before using our app. By using the app, you agree to be bound by the terms and conditions stated below. If you do not agree to these terms, do not use the application.

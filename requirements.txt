@@ -6,6 +6,8 @@ Pillow
 # GUI
 customtkinter
 
+# UTIL
+pyinstaller
 
 
 
