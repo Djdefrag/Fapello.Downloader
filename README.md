@@ -10,7 +10,7 @@
 </div>
 <br>
 <div align="center">
-    <img src="https://github.com/Djdefrag/Fapello.Downloader/assets/32263112/bfab78d4-65e2-4833-b78a-da9195bec7c2"> </a> 
+    <img src="https://github.com/user-attachments/assets/7a981b8e-8769-4548-8faa-3b14ac5fd373"> </a> 
 </div>
 
 ## Other projects.🤓
@@ -25,7 +25,7 @@
 Fapello.Downloader is completely written in Python, from backend to frontend. External packages are:
 - [ ] Core -> beautifulsoup / requests
 - [ ] GUI -> customtkinter
-- [ ] Packaging -> nuitka
+- [ ] Packaging -> pyinstaller
 
 ## How to use. 👨‍💻
 * Copy the Fapello link of interest (for example: https://fapello.com/mia-kha***/)
